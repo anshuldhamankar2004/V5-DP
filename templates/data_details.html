@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Data Details</title>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --card-dark: #161b22;
+            --text-light: #c9d1d9;
+            --accent-green: #2ea043;
+            --accent-green-hover: #238636;
+            --accent-blue: #58a6ff;
+            --accent-blue-hover: #3d8bff;
+            --input-bg: #21262d;
+            --border-color: #30363d;
+            --border-radius: 1rem;
+            --error-red: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--accent-green);
+            font-size: 2.5rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 70% 30%;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1800px;
+        }
+
+        .table-preview {
+            grid-column: 1 / 1;
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            overflow: auto;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+
+        .table-preview h3 {
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .table-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .table-preview th,
+        .table-preview td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .table-preview th {
+            background-color: #2a3138;
+            font-weight: 600;
+        }
+
+        .controls {
+            grid-column: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .foldable-section {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 1.5rem;
+            cursor: pointer;
+        }
+
+        .section-header h2 {
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        .section-content {
+            padding: 0 1.5rem 1.5rem;
+            display: none;
+        }
+
+        .section-content.open {
+            display: block;
+        }
+
+        .section label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .section select,
+        .section input[type="text"],
+        .section input[type="number"] {
+            width: 100%;
+            padding: 0.6rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.3rem;
+            background-color: var(--input-bg);
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .section select[multiple] {
+            height: 6rem;
+        }
+
+        .section button {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .section button:hover {
+            background-color: var(--accent-green-hover);
+        }
+
+        .section button:disabled {
+            background-color: #6b7280;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .section button:disabled:hover {
+            background-color: #6b7280;
+        }
+
+        .visualizations {
+            grid-column: 1 / 2;
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+            margin-top: 1.5rem;
+        }
+
+        .visualizations h3 {
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .visualization-output {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 0.3rem;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.8rem;
+            min-height: 4rem;
+        }
+
+        .output-message {
+            margin-top: 0.5rem;
+            padding: 0.6rem;
+            border-radius: 0.3rem;
+            background-color: #2a3138;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            background-color: #311818;
+            border-color: #9f1239;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .table-preview {
+                grid-column: 1 / 1;
+            }
+
+            .controls {
+                grid-column: 1 / 1;
+            }
+
+            .visualizations {
+                grid-column: 1 / 1;
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📊 Data Details Dashboard</h1>
+        <p>Advanced insights for analysts, data scientists, and ML engineers</p>
+    </header>
+
+    <div class="container">
+        <div class="table-preview">
+            <h3>👀 Live Data Preview</h3>
+            <div class="config-input">
+                <label for="previewRows">Rows to show:</label>
+                <input type="number" id="previewRows" value="5" min="1" max="100">
+            </div>
+            <div id="previewTable">
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>📌 Dataset Overview</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content open" id="datasetOverview">
+                    <ul>
+                        <li id="rows"><strong>Rows:</strong></li>
+                        <li id="columns"><strong>Columns:</strong></li>
+                        <li id="memory"><strong>Memory Usage:</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>🧬 Data Types</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="dataTypes">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Data Type</th>
+                                <th>Unique Values</th>
+                                <th>Missing %</th>
+                                <th>Zero Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>📈 Descriptive Statistics</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="descriptiveStats">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Mean</th>
+                                <th>Std</th>
+                                <th>Min</th>
+                                <th>25%</th>
+                                <th>50%</th>
+                                <th>75%</th>
+                                <th>Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>🔎 Outlier Summary</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="outlierSummary">
+                    <p>Shows count of potential outliers per numerical column (IQR method)</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Outlier Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>💡 Categorical Summary</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="categoricalSummary">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Unique Values</th>
+                                <th>Top Value</th>
+                                <th>Frequency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>🧮 Correlation Matrix</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="correlationMatrixSection">
+                    <p>Correlation between numerical features:</p>
+                    <div id="correlationMatrix">
+                        <p class="output-message">Loading correlation data...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>🧠 Modeling Considerations</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="modelingConsiderations">
+                    <p class="output-message">Further modeling considerations can be added here based on the data analysis.</p>
+                    <ul>
+                        <li>Check target variable distribution if applicable.</li>
+                        <li>Identify potential class imbalance for classification tasks.</li>
+                        <li>Look for features with high cardinality in categorical columns.</li>
+                        <li>Consider the impact of missing values on modeling.</li>
+                        <li>Analyze feature correlations for potential multicollinearity.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>📊 Data Quality Insights</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="dataQualityInsights">
+                    <p>Summary of data quality issues by column.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Missing %</th>
+                                <th>Duplicate</th>
+                                <th>Constant</th>
+                                <th>Data Type</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>📈 Column Distribution Preview</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="distributionPreview">
+                    <p>Histogram/Bar chart for selected column types.</p>
+                    <div id="distributionCharts"></div>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>⏱ Date/Time Analysis</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="datetimeAnalysis">
+                    <p>Breakdown of detected datetime columns.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Min Date</th>
+                                <th>Max Date</th>
+                                <th>Detected Granularity</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>🔡 Text Column Summary</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="textSummary">
+                    <p>Insights into textual columns including word/char counts.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Avg Length</th>
+                                <th>Max Length</th>
+                                <th>Top Keyword</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header">
+                    <h2>🧠 AI Cleanup Suggestions</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content" id="aiSuggestions">
+                    <ul class="ai-insights">
+                        <li>Analyzing column-level data issues...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fileId = window.location.pathname.split('/').pop();
+    const previewRowsInput = document.getElementById('previewRows');
+    const previewTableDiv = document.getElementById('previewTable');
+    const foldableSections = document.querySelectorAll('.foldable-section');
+    const aiSuggestionsDiv = document.getElementById('aiSuggestions'); // Get the AI suggestions container
+
+    async function fetchData(endpoint) {
+        try {
+            const response = await fetch(`/data_details/${fileId}/${endpoint}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Error fetching ${endpoint}:`, error);
+            const fallbackId = {
+                overview: 'datasetOverview',
+                correlation_matrix: 'correlationMatrix',
+                preview: 'previewTable'
+            }[endpoint.split('?')[0]] || endpoint;
+            displayError(document.getElementById(fallbackId), `Failed to load data: ${error.message}`);
+            return null; // Important: Return null on error
+        }
+    }
+
+    function displayError(element, message) {
+        if (element) {
+            element.innerHTML = `<p class="error-message">${message}</p>`;
+        }
+    }
+
+    async function displayOverview() {
+        const data = await fetchData('overview');
+        if (data) {
+            document.getElementById('rows').innerHTML = `<strong>Rows:</strong> ${data.rows}`;
+            document.getElementById('columns').innerHTML = `<strong>Columns:</strong> ${data.columns}`;
+            document.getElementById('memory').innerHTML = `<strong>Memory Usage:</strong> ${data.memory_usage}`;
+        }
+    }
+
+    async function displayPreview(rowsToShow) {
+        const data = await fetchData(`preview?limit=${rowsToShow}`);
+        if (data && Array.isArray(data.data) && Array.isArray(data.columns)) {
+            let html = '<table><thead><tr>';
+            data.columns.forEach(col => html += `<th>${col}</th>`);
+            html += '</tr></thead><tbody>';
+            data.data.forEach(row => {
+                html += '<tr>';
+                data.columns.forEach(col => {
+                    html += `<td>${row[col] === null ? 'N/A' : row[col]}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            previewTableDiv.innerHTML = html;
+        } else {
+            previewTableDiv.innerHTML = '<p class="output-message">No preview data available.</p>';
+        }
+    }
+
+    async function displayDataTypes() {
+        const data = await fetchData('data_types');
+        const tbody = document.querySelector('#dataTypes tbody');
+        if (data) {
+            tbody.innerHTML = Object.entries(data).map(([col, val]) =>
+                `<tr>
+                    <td>${col}</td>
+                    <td>${val.dtype}</td>
+                    <td>${val.unique_values}</td>
+                    <td>${val.missing_percentage}</td>
+                    <td>${val.zero_count}</td>
+                </tr>`).join('');
+        }
+    }
+
+    async function displayDescriptiveStats() {
+        const data = await fetchData('descriptive_stats');
+        const tbody = document.querySelector('#descriptiveStats tbody');
+        const metricsOrder = ['mean', 'std', 'min', '25%', '50%', '75%', 'max'];
+        if (data) {
+            const columns = Object.keys(data);
+            if (columns.length) {
+                let header = '<tr><th>Column</th>' + metricsOrder.map(m => `<th>${m}</th>`).join('') + '</tr>';
+                tbody.innerHTML = columns.map(col =>
+                    `<tr><td>${col}</td>` +
+                    metricsOrder.map(m => `<td>${data[col][m] ?? '-'}</td>`).join('') +
+                    '</tr>').join('');
+                tbody.insertAdjacentHTML('beforebegin', `<thead>${header}</thead>`);
+            }
+        }
+    }
+
+    async function displayOutlierSummary() {
+        const data = await fetchData('outliers');
+        const tbody = document.querySelector('#outlierSummary tbody');
+        if (data) {
+            tbody.innerHTML = Object.entries(data).map(([col, count]) =>
+                `<tr><td>${col}</td><td>${count}</td></tr>`).join('');
+        }
+    }
+
+    async function displayCategoricalSummary() {
+        const data = await fetchData('categorical_summary');
+        const tbody = document.querySelector('#categoricalSummary tbody');
+        if (data) {
+            tbody.innerHTML = Object.entries(data).map(([col, val]) =>
+                `<tr>
+                    <td>${col}</td>
+                    <td>${val.unique_values}</td>
+                    <td>${val.top_value ?? 'N/A'}</td>
+                    <td>${val.frequency}</td>
+                </tr>`).join('');
+        }
+    }
+
+    async function displayCorrelationMatrix() {
+        const data = await fetchData('correlation_matrix');
+        const div = document.getElementById('correlationMatrix');
+        if (data) {
+            const cols = Object.keys(data);
+            let html = '<table><thead><tr><th></th>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+            cols.forEach(r => {
+                html += `<tr><th>${r}</th>` + cols.map(c => `<td>${(data[r][c] ?? 'N/A').toFixed?.(2) || 'N/A'}</td>`).join('') + '</tr>';
+            });
+            html += '</tbody></table>';
+            div.innerHTML = html;
+        }
+    }
+
+    async function displayDataQuality() {
+        const data = await fetchData('data_quality');
+        if (data) populateDataQualityInsights(data);
+    }
+
+    async function displayDistributionCharts() {
+        const html = await fetchData('distribution_charts');
+        if (html) populateDistributionCharts(html.html || html);
+    }
+
+    async function displayDatetimeAnalysis() {
+        const data = await fetchData('datetime_analysis');
+        if (data) populateDatetimeAnalysis(data);
+    }
+
+    async function displayTextSummary() {
+        const data = await fetchData('text_summary');
+        if (data) populateTextSummary(data);
+    }
+
+    function populateDataQualityInsights(data) {
+        const container = document.getElementById('dataQualityInsights');
+        if (!container) return;
+        container.innerHTML = '<table><thead><tr><th>Column</th><th>Missing %</th><th>Duplicate</th><th>Constant</th><th>Data Type</th></tr></thead><tbody>' +
+            data.map(row => `<tr>
+                <td>${row.column}</td>
+                <td>${row.missing_percent}</td>
+                <td>${row.duplicate}</td>
+                <td>${row.constant}</td>
+                <td>${row.dtype}</td>
+            </tr>`).join('') + '</tbody></table>';
+    }
+
+    function populateDistributionCharts(html) {
+        const container = document.getElementById('distributionCharts');
+        if (!container) return;
+        container.innerHTML = html;
+    }
+
+    function populateDatetimeAnalysis(data) {
+        const container = document.getElementById('datetimeAnalysis');
+        if (!container) return;
+        let html = '<table><thead><tr><th>Column</th><th>Min Date</th><th>Max Date</th><th>Granularity</th></tr></thead><tbody>';
+        for (const col in data) {
+            if (data.hasOwnProperty(col)) {
+                html += `<tr>
+                    <td>${col}</td>
+                    <td>${data[col].min_date}</td>
+                    <td>${data[col].max_date}</td>
+                    <td>${data[col].granularity}</td>
+                </tr>`;
+            }
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function populateTextSummary(data) {
+        const container = document.getElementById('textSummary');
+        if (!container) return;
+        let html = '<table><thead><tr><th>Column</th><th>Avg Length</th><th>Max Length</th><th>Top Keyword</th></tr></thead><tbody>';
+        for (const col in data) {
+            if (data.hasOwnProperty(col)) {
+                html += `<tr>
+                    <td>${col}</td>
+                    <td>${data[col].avg_length}</td>
+                    <td>${data[col].max_length}</td>
+                    <td>${data[col].top_keyword || 'N/A'}</td>
+                </tr>`;
+            }
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function populateAISuggestions(data) {
+    const container = document.getElementById('aiSuggestions');
+    if (!container) return;
+
+    if (data && data.suggestion) {
+        const suggestion = data.suggestion.trim();
+
+        if (suggestion === "No suggestions available.") {
+            container.innerHTML = '<p>No AI suggestions available.</p>';
+        } else if (suggestion.startsWith('Suggestions:')) {
+            const lines = suggestion.split('\n').slice(1); // Skip "Suggestions:" line
+            const listItems = lines
+                .filter(line => /^\d+\./.test(line.trim()))
+                .map(line => `<li>${line.trim().substring(line.indexOf('.') + 1).trim()}</li>`)
+                .join('');
+
+            const html = `<p><strong>Data Cleaning Suggestions:</strong></p><ol>${listItems}</ol>`;
+            container.innerHTML = html;
+        } else {
+            console.warn("Unexpected AI suggestion format:", suggestion);
+            container.innerHTML = '<p>Error: Invalid AI suggestion format.</p>';
+        }
+    } else {
+        container.innerHTML = '<p>No AI suggestions available.</p>';
+    }
+}
+
+    async function getAndDisplayAISuggestions() {
+        const analysisData = await gatherAllAnalysisData();
+        if (analysisData) {
+            try {
+                const response = await fetch(`/data_details/${fileId}/ai_suggestions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(analysisData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Failed to fetch AI suggestions: ${response.status}`);
+                }
+
+                const aiSuggestions = await response.json();
+                populateAISuggestions(aiSuggestions);
+            } catch (error) {
+                console.error("Error fetching AI suggestions:", error);
+                displayError(aiSuggestionsDiv, `Failed to load AI suggestions: ${error.message}`);
+            }
+        }
+    }
+    async function gatherAllAnalysisData() {
+        const data = {};
+        data['overview'] = await fetchData('overview');
+        data['data_types'] = await fetchData('data_types');
+        data['descriptive_stats'] = await fetchData('descriptive_stats');
+        data['outliers'] = await fetchData('outliers');
+        data['categorical_summary'] = await fetchData('categorical_summary');
+        data['data_quality'] = await fetchData('data_quality');
+        data['datetime_analysis'] = await fetchData('datetime_analysis');
+        data['text_summary'] = await fetchData('text_summary');
+
+        // Check if any of the fetches failed
+        for (const key in data) {
+            if (data[key] === null) {
+                console.warn(`Data fetch failed for ${key}.  AI suggestions may be incomplete.`);
+                return null; // Or,  return a partial object if you want to proceed with available data
+            }
+        }
+        return data;
+    }
+
+
+    // Live preview rows selector
+    previewRowsInput.addEventListener('change', () => {
+        const rows = parseInt(previewRowsInput.value);
+        if (rows > 0 && rows <= 100) {
+            displayPreview(rows);
+        } else {
+            alert("Enter a number between 1 and 100.");
+            previewRowsInput.value = 5;
+            displayPreview(5);
+        }
+    });
+
+    // Initial render
+    displayOverview();
+    displayPreview(parseInt(previewRowsInput.value));
+    displayDataTypes();
+    displayDescriptiveStats();
+    displayOutlierSummary();
+    displayCategoricalSummary();
+    displayCorrelationMatrix();
+    displayDataQuality();
+    displayDistributionCharts();
+    displayDatetimeAnalysis();
+    displayTextSummary();
+    getAndDisplayAISuggestions(); // Call the new function to get and display AI suggestions
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    // ... your existing JavaScript code ...
+
+    const foldableSections = document.querySelectorAll('.foldable-section');
+
+    foldableSections.forEach(section => {
+        const header = section.querySelector('.section-header');
+        const content = section.querySelector('.section-content');
+        const toggleIcon = header.querySelector('.toggle-icon');
+
+        header.addEventListener('click', () => {
+            content.classList.toggle('open');
+            toggleIcon.textContent = content.classList.contains('open') ? '▲' : '▼';
+        });
+    });
+});
+</script>
+
+
+</body>
+</html>

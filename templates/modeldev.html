@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Builder</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <style>
+/* 🌑 Dark Theme Inspired by GitHub, ChatGPT, HackerRank */
+body {
+  background-color: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+a, a:hover {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+h1, h4, h5, label, p, small {
+  color: #c9d1d9;
+}
+
+/* Sidebar */
+.sidebar {
+  height: 100vh;
+  background: #161b22;
+  padding: 1.5rem 1rem;
+  border-right: 1px solid #30363d;
+}
+
+.sidebar a {
+  display: block;
+  margin: 1rem 0;
+  font-weight: 500;
+}
+
+.sidebar a:hover {
+  text-decoration: underline;
+}
+
+/* Step container */
+.step-container {
+  padding: 2rem;
+}
+
+/* Steps visibility */
+.step-content {
+  display: none;
+}
+
+.step-content.active {
+  display: block;
+}
+
+/* Form Elements */
+.form-select,
+.form-control,
+input[type="range"],
+input[type="number"],
+textarea {
+  background-color: #161b22;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+}
+
+.form-select:focus,
+.form-control:focus,
+input[type="range"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 0.2rem rgba(88, 166, 255, 0.25);
+}
+
+/* Buttons */
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.btn-outline-primary {
+  color: #58a6ff;
+  border-color: #58a6ff;
+}
+
+.btn-outline-primary:hover {
+  background-color: #58a6ff;
+  color: #0d1117;
+}
+
+.btn-outline-secondary {
+  color: #8b949e;
+  border-color: #8b949e;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #8b949e;
+  color: #0d1117;
+}
+
+.btn-outline-success {
+  color: #3fb950;
+  border-color: #3fb950;
+}
+
+.btn-outline-success:hover {
+  background-color: #2ea043;
+  color: #0d1117;
+}
+
+.btn-success {
+  background-color: #238636;
+  border: none;
+}
+
+.btn-success:hover {
+  background-color: #2ea043;
+}
+
+.btn-dark {
+  background-color: #2ea043;
+  color: #c9d1d9;
+}
+
+.btn-dark:hover {
+  background-color: #30363d;
+}
+
+.btn-outline-info {
+  color: #79c0ff;
+  border-color: #79c0ff;
+}
+
+.btn-outline-info:hover {
+  background-color: #79c0ff;
+  color: #0d1117;
+}
+
+.btn-outline-danger {
+  color: #f85149;
+  border-color: #f85149;
+}
+
+.btn-outline-danger:hover {
+  background-color: #f85149;
+  color: #0d1117;
+}
+
+/* Cards for models, etc. */
+.model-card, .card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Progress Bar */
+.progress {
+  background-color: #21262d;
+  border-radius: 0.5rem;
+}
+
+.progress-bar {
+  background-color: #3fb950;
+  font-weight: bold;
+}
+
+/* Footer */
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  background: #161b22;
+  border-top: 1px solid #30363d;
+  padding: 1rem;
+}
+
+/* Logs Output */
+#logOutputArea {
+    background-color: black !important; /* <-- Force it */
+    color: lime !important; /* <-- Force it */
+    padding: 10px;
+    margin-top: 10px;
+    height: 250px;
+    overflow-y: auto;
+    font-family: monospace;
+    border: 1px solid #30363d;
+  }
+
+/* Misc Adjustments */
+.mt-3 { margin-top: 1rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.ms-2 { margin-left: 0.5rem !important; }
+</style>
+
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <h1>DataPilot.chat</h1>
+      <a href="/project-info">Project Info</a>
+      <a href="/dataset-info">Dataset Info</a>
+      <a href="/notebook">Notebook</a>
+      <a href="/saved-models">Saved Models</a>
+      <a href="/help">Help / Docs</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-10 step-container">
+      <!-- Step 1 -->
+      <div id="step1" class="step-content active">
+        <h4>Step 1: Choose Objective, Target & Features</h4>
+        <label>Objective:</label>
+        <select class="form-select" id="objective">
+          <option>Classification</option>
+          <option>Regression</option>
+          <option>Clustering</option>
+        </select>
+
+        <label class="mt-3">Target Column:</label>
+        <select id="targetCol" class="form-select"></select>
+
+        <label class="mt-3">Select Input Features:</label>
+        <select id="featureCols" multiple class="form-select" style="height: 150px;"></select>
+        <button class="btn btn-sm btn-outline-primary mt-2" onclick="selectAllFeatures()">Select All Features</button>
+        <small class="text-muted">Use Ctrl or Cmd (⌘) to select multiple</small>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="step2" class="step-content">
+        <h4>Step 2: Data & Feature Insights</h4>
+        <button class="btn btn-info" onclick="generateEDA()">Generate EDA</button>
+        <div id="edaResults" class="mt-3"></div>
+      </div>
+
+      <!-- Step 3 -->
+      <div id="step3" class="step-content">
+  <h4>Step 3: Model Selection</h4>
+
+  <div class="d-flex flex-wrap gap-2 mb-2">
+    <button class="btn btn-secondary" onclick="recommendModels()">Recommend Best Models</button>
+    <button class="btn btn-outline-info" onclick="autoMLRecommend()">Recommend Model (AutoML)</button>
+  </div>
+
+  <!-- ✅ Add this container to hold recommended models -->
+  <div id="modelOptions" class="row mb-3"></div>
+
+  <!-- Optional: AutoML output -->
+  <div id="automlOutput" class="row"></div>
+</div>
+
+    <!-- Step 4: Configuration -->
+<div id="step4" class="step-content">
+  <h4>Step 4: Configuration</h4>
+
+  <label>Train/Test Split:</label>
+  <input type="range" min="50" max="90" value="80" id="splitRange" class="form-range">
+  <span id="splitVal" class="ms-2">80%</span><br>
+
+  <label class="mt-3">Cross-Validation Folds:</label>
+  <input type="number" id="cvFolds" class="form-control mt-1" value="5" min="2" max="20">
+
+  <!-- Hyperparameter Tuning Section -->
+  <div class="card mt-4 model-card">
+    <div class="card-header" style="background: #161b22; border-bottom: 1px solid #30363d;">
+      <h5 style="color: #58a6ff;">Hyperparameter Tuning (Optional)</h5>
+    </div>
+    <div class="card-body">
+
+      <!-- Enable Tuning Checkbox -->
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="enableTuning">
+        <label class="form-check-label" for="enableTuning">Enable Hyperparameter Tuning</label>
+      </div>
+
+      <!-- Tuning Method Selection -->
+      <div class="mb-3">
+        <label for="tuningMethod" class="form-label">Tuning Strategy:</label>
+        <select id="tuningMethod" class="form-select">
+          <option value="gridsearch">GridSearchCV (Exhaustive)</option>
+          <option value="randomsearch">RandomizedSearchCV (Fast)</option>
+          <option value="optuna">Optuna (Smart Optimization)</option>
+          <option value="hyperband">Hyperband (Resource-Efficient)</option>
+        </select>
+      </div>
+
+      <!-- Max Iterations Input -->
+      <div class="mb-3">
+        <label for="maxIterations" class="form-label">Max Iterations / Trials:</label>
+        <input type="number" id="maxIterations" class="form-control" min="1" value="50">
+      </div>
+
+      <!-- Search Space Inputs -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="minDepth" class="form-label">Min Depth:</label>
+          <input type="number" id="minDepth" class="form-control" min="1" max="100" value="3">
+        </div>
+        <div class="col-md-6">
+          <label for="maxDepth" class="form-label">Max Depth:</label>
+          <input type="number" id="maxDepth" class="form-control" min="1" max="100" value="10">
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="minLR" class="form-label">Min Learning Rate:</label>
+          <input type="number" step="0.0001" id="minLR" class="form-control" value="0.001">
+        </div>
+        <div class="col-md-6">
+          <label for="maxLR" class="form-label">Max Learning Rate:</label>
+          <input type="number" step="0.0001" id="maxLR" class="form-control" value="0.1">
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="minEstimators" class="form-label">Min Estimators (if applicable):</label>
+          <input type="number" id="minEstimators" class="form-control" min="10" max="1000" value="50">
+        </div>
+        <div class="col-md-6">
+          <label for="maxEstimators" class="form-label">Max Estimators (if applicable):</label>
+          <input type="number" id="maxEstimators" class="form-control" min="10" max="1000" value="300">
+        </div>
+      </div>
+
+      <!-- Optimize Metric -->
+      <div class="mb-3">
+        <label for="optimizeMetric" class="form-label">Metric to Optimize:</label>
+        <select id="optimizeMetric" class="form-select">
+          <option value="accuracy">Accuracy (Classification)</option>
+          <option value="f1">F1 Score (Classification)</option>
+          <option value="roc_auc">ROC AUC (Classification)</option>
+          <option value="r2">R² Score (Regression)</option>
+          <option value="neg_root_mean_squared_error">RMSE (Regression)</option>
+        </select>
+      </div>
+
+      <!-- Early Stopping -->
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="enableEarlyStop">
+        <label class="form-check-label" for="enableEarlyStop">Enable Early Stopping (if supported)</label>
+      </div>
+
+      <!-- Custom Parameters (Advanced Users) -->
+      <div class="mb-3">
+        <label for="customParams" class="form-label">Custom Search Space (Advanced, JSON Format):</label>
+        <textarea id="customParams" class="form-control" rows="4" placeholder='{"max_depth": [3, 5, 10], "learning_rate": [0.01, 0.1]}'></textarea>
+        <small class="text-muted">Optional. Use JSON to define a custom search space manually.</small>
+      </div>
+
+    </div> <!-- end card-body -->
+  </div> <!-- end card -->
+</div> <!-- end step4 -->
+
+
+<!-- Step 5: Train & Evaluate -->
+<div id="step5" class="step-content mt-4">
+  <h4>Step 5: Train & Evaluate</h4>
+  <button class="btn btn-success" onclick="trainModel()">Train Model</button>
+
+  <div class="progress mt-3" style="height: 25px;">
+      <div id="trainProgress" class="progress-bar progress-bar-striped progress-bar-animated"
+           role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+        0%
+      </div>
+  </div>
+
+  <div id="logOutputArea" style="height: 200px; overflow-y: scroll; background-color: #f8f9fa; padding: 10px; margin-top: 10px;">
+    <!-- logs will appear here -->
+  </div>
+</div>
+
+      <!-- Step 6 -->
+      <div id="step6" class="step-content mt-4" style="display:none;">
+  <h4>Step 6: Test Your Model</h4>
+
+  <div id="customInputArea" class="mb-3">
+    <!-- Dynamic input fields will be generated here based on model features -->
+  </div>
+
+  <button class="btn btn-primary" onclick="predictCustomInput()">Predifddfct</button>
+
+  <div id="predictionOutput" class="mt-3" style="background: #f8f9fa; padding: 10px;">
+    <!-- Prediction result will appear here -->
+  </div>
+</div>
+
+      <!-- Step 7 -->
+      <div id="step7" class="step-content">
+        <h4>Step 7: Export / Deploy</h4>
+        <button class="btn btn-outline-primary" onclick="downloadModel()">Download Model</button>
+        <button class="btn btn-outline-secondary" onclick="downloadNotebook()">Download Notebook</button>
+        <button class="btn btn-outline-success">Generate API</button>
+      </div>
+
+      <!-- Stepper buttons -->
+      <div class="stepper-buttons">
+        <button class="btn btn-outline-secondary" onclick="changeStep(-1)">Previous</button>
+        <button class="btn btn-primary" onclick="changeStep(1)">Next</button>
+      </div>
+
+      <!-- Sticky Footer -->
+      <div class="sticky-footer d-flex justify-content-between">
+        <div>
+          <button class="btn btn-dark" onclick="saveModel()">Save Model</button>
+          <button class="btn btn-outline-info" onclick="predictNew()">Predict</button>
+        </div>
+        <div>
+          <button class="btn btn-outline-danger" onclick="openNotebook()">Open Notebook</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const fileId = window.location.pathname.split('/').pop();
+let currentStep = 1;
+let modelDescriptions = {
+  "RandomForestClassifier": "🌲 Random Forest is an ensemble method that builds multiple decision trees and merges them to get more accurate and stable predictions. Excellent for handling tabular data with mixed types and missing values.",
+  "LogisticRegression": "📈 A linear model used for binary classification. Fast, interpretable, and performs well when the data is linearly separable. Great for problems like spam detection, churn prediction, etc.",
+  "XGBoostClassifier": "⚡ Extreme Gradient Boosting classifier. Highly optimized for performance and speed, often wins ML competitions. Handles missing values, regularization, and supports custom loss functions.",
+  "LGBMClassifier": "🌿 LightGBM is a fast, efficient gradient boosting framework that uses histogram-based learning. Ideal for large datasets and high-dimensional features. Supports categorical features natively.",
+  "CatBoostClassifier": "🐱 Gradient boosting by Yandex, designed for datasets with categorical variables. Requires minimal data preprocessing and tuning. Offers great out-of-the-box performance.",
+  "SVC": "➗ Support Vector Classifier builds a decision boundary to separate classes with the maximum margin. Powerful for high-dimensional spaces but slower on large datasets.",
+  "RandomForestRegressor": "🌳 Ensemble of decision trees for regression tasks. Reduces overfitting and handles non-linear relationships well. Suitable for structured/tabular data with moderate noise.",
+  "LinearRegression": "📉 Basic linear approach for regression problems. Works well for linearly correlated data and is highly interpretable. Not suitable for complex patterns or outliers.",
+  "XGBoostRegressor": "⚡ XGBoost for regression. Known for handling non-linear relationships with great accuracy. Includes regularization and missing value handling, making it robust and powerful.",
+  "LGBMRegressor": "🚀 LightGBM for regression. Extremely fast and memory efficient. Performs well with large datasets, many features, and provides high accuracy with minimal tuning.",
+  "CatBoostRegressor": "🐱 CatBoost for regression. Automatically deals with categorical features and works well with default parameters. Offers great generalization with minimal overfitting.",
+  "SVR": "🧮 Support Vector Regression. Tries to fit the best line within a margin of tolerance. Works well for small- to medium-sized datasets, but sensitive to parameter tuning and scaling.",
+  "KMeans": "🎯 Unsupervised clustering algorithm. Divides data into K distinct non-overlapping groups based on feature similarity. Best for numerical data where grouping is meaningful."
+};
+
+document.getElementById("splitRange").addEventListener("input", function () {
+  document.getElementById("splitVal").innerText = `${this.value}%`;
+});
+
+document.getElementById("enableTuning").addEventListener("change", function () {
+  const tuningOptions = document.getElementById("tuningOptions");
+  tuningOptions.style.display = this.checked ? "block" : "none";
+});
+function selectAllFeatures() {
+  const featureSelect = document.getElementById("featureCols");
+  for (let i = 0; i < featureSelect.options.length; i++) {
+    featureSelect.options[i].selected = true;
+  }
+}
+
+function generateCustomInputs(features) {
+  const area = document.getElementById('customInputArea');
+  area.innerHTML = '';
+
+  features.forEach(feature => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control mb-2';
+    input.placeholder = `Enter value for ${feature}`;
+    input.id = `input_${feature}`;
+    area.appendChild(input);
+  });
+}
+
+
+function predictCustomInput() {
+  const inputs = {};
+  selectedFeatures.forEach(feature => {
+    const value = document.getElementById(`input_${feature}`).value;
+    inputs[feature] = value;
+  });
+
+  fetch(`/modeldev/${fileId}/predict`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      model_path: trainedModelPath,
+      input_data: inputs
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('predictionOutput').innerHTML = `<strong>Prediction:</strong> ${data.prediction}`;
+    } else {
+      document.getElementById('predictionOutput').innerHTML = `<strong>Error:</strong> ${data.error}`;
+    }
+  });
+}
+
+
+function changeStep(direction) {
+  document.querySelector(`#step${currentStep}`).classList.remove("active");
+  currentStep += direction;
+  if (currentStep < 1) currentStep = 1;
+  if (currentStep > 7) currentStep = 7;
+  document.querySelector(`#step${currentStep}`).classList.add("active");
+}
+
+// ✅ Load columns into Step 1
+window.onload = () => {
+  fetch(`/modeling/modeldev/${fileId}/columns`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.columns) {
+        const targetSelect = document.getElementById("targetCol");
+        const featureSelect = document.getElementById("featureCols");
+
+        targetSelect.innerHTML = data.columns.map(col => `<option value="${col}">${col}</option>`).join('');
+        updateFeatureOptions(data.columns, targetSelect.value);
+
+        targetSelect.addEventListener("change", () => {
+          updateFeatureOptions(data.columns, targetSelect.value);
+        });
+      } else {
+        console.error("No columns returned from backend.");
+      }
+    })
+    .catch(err => {
+      console.error("Error loading columns:", err);
+    });
+};
+
+// 🔁 Update feature options
+function updateFeatureOptions(columns, selectedTarget) {
+  const featureSelect = document.getElementById("featureCols");
+  featureSelect.innerHTML = columns
+    .filter(col => col !== selectedTarget)
+    .map(col => `<option value="${col}">${col}</option>`)
+    .join('');
+}
+
+// ✅ Recommend models
+function recommendModels() {
+  const objective = document.getElementById("objective").value;
+  const container = document.getElementById("modelOptions");
+  if (!container) {
+    console.error("Element with ID 'modelOptions' not found in DOM.");
+    return;
+  }
+
+  fetch(`/modeling/modeldev/${fileId}/recommend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ objective })
+  })
+    .then(res => res.json())
+    .then(data => {
+      container.innerHTML = (data.models || []).map(model => `
+        <div class="col-md-6 model-card d-flex align-items-center justify-content-between">
+          <div>
+            <input type="radio" name="modelChoice" value="${model}" id="model-${model}">
+            <label for="model-${model}" class="ms-2">${model}</label>
+          </div>
+          <span class="bi bi-info-circle" style="cursor:pointer;" data-bs-toggle="tooltip" title="${modelDescriptions[model] || 'No description available'}"></span>
+        </div>
+      `).join('');
+
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+    })
+    .catch(err => {
+      console.error("Error recommending models:", err);
+    });
+}
+
+async function trainModel() {
+  try {
+    const model = document.querySelector('input[name="modelChoice"]:checked')?.value;
+    const target = document.getElementById("targetCol")?.value.trim();
+    const features = Array.from(document.getElementById("featureCols")?.selectedOptions || []).map(opt => opt.value);
+    const train_split = parseInt(document.getElementById("splitRange")?.value) || 80;
+    const cv = parseInt(document.getElementById("cvFolds")?.value) || 5;
+    const objective = document.getElementById("objective")?.value.trim();
+
+    const enable_tuning = document.getElementById("enableTuning")?.checked;
+    const tuning_method = enable_tuning ? document.getElementById("tuningMethod")?.value.trim() : null;
+    const tuning_iterations = enable_tuning ? parseInt(document.getElementById("maxIterations")?.value) : null;
+    const min_depth = enable_tuning ? parseInt(document.getElementById("minDepth")?.value) : null;
+    const max_depth = enable_tuning ? parseInt(document.getElementById("maxDepth")?.value) : null;
+    const min_lr = enable_tuning ? parseFloat(document.getElementById("minLR")?.value) : null;
+    const max_lr = enable_tuning ? parseFloat(document.getElementById("maxLR")?.value) : null;
+    const min_estimators = enable_tuning ? parseInt(document.getElementById("minEstimators")?.value) : null;
+    const max_estimators = enable_tuning ? parseInt(document.getElementById("maxEstimators")?.value) : null;
+    const optimize_metric = enable_tuning ? document.getElementById("optimizeMetric")?.value.trim() : null;
+    const early_stopping = enable_tuning ? document.getElementById("enableEarlyStop")?.checked : false;
+
+    let custom_search_space = null;
+    if (enable_tuning) {
+      const customParamsText = document.getElementById("customParams")?.value.trim();
+      if (customParamsText) {
+        try {
+          custom_search_space = JSON.parse(customParamsText);
+        } catch (error) {
+          alert("Invalid JSON in Custom Search Space.");
+          return;
+        }
+      }
+    }
+
+    if (!model || !target || features.length === 0) {
+      alert("Please select a model, target, and at least one feature before training.");
+      return;
+    }
+
+    const payload = {
+      model,
+      target,
+      features,
+      train_split,
+      cv,
+      objective,
+      enable_tuning,
+      tuning_method,
+      tuning_iterations,
+      min_depth,
+      max_depth,
+      min_lr,
+      max_lr,
+      min_estimators,
+      max_estimators,
+      optimize_metric,
+      early_stopping,
+      custom_search_space
+    };
+
+    console.log("Training payload:", payload);
+
+    const progressBar = document.getElementById("trainProgress");
+    const logArea = document.getElementById("logOutputArea");
+
+    // Reset UI
+    progressBar.style.width = '0%';
+    progressBar.setAttribute('aria-valuenow', 0);
+    progressBar.innerText = '0%';
+    logArea.innerHTML = '';
+
+    const response = await fetch(`/modeling/modeldev/${fileId}/train`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.body) {
+      throw new Error("No response body received from server.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let progress = 2;
+
+    async function readStream() {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log("Training complete.");
+          progressBar.style.width = '100%';
+          progressBar.setAttribute('aria-valuenow', 100);
+          progressBar.innerText = '100% ✅';
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        logArea.innerHTML += chunk;
+        logArea.scrollTop = logArea.scrollHeight;
+
+        if (progress < 95) {
+          progress += Math.floor(Math.random() * 4) + 2; // +2% to +5% looks even smoother
+          if (progress > 95) progress = 95;
+          progressBar.style.width = `${progress}%`;
+          progressBar.setAttribute('aria-valuenow', progress);
+          progressBar.innerText = `${progress}%`;
+        }
+      }
+    }
+
+    await readStream();
+
+  } catch (error) {
+    console.error("Training failed:", error);
+    alert("Training failed. Check the console for details.");
+
+    const progressBar = document.getElementById("trainProgress");
+    if (progressBar) {
+      progressBar.style.width = '0%';
+      progressBar.setAttribute('aria-valuenow', 0);
+      progressBar.innerText = 'Failed ❌';
+    }
+  }
+}
+
+
+function autoMLRecommend() {
+  const target = document.getElementById("targetCol").value;
+  const features = Array.from(document.getElementById("featureCols").selectedOptions).map(opt => opt.value);
+  const objective = document.getElementById("objective").value;
+  const log = document.getElementById("automlOutput");
+
+  if (!target || features.length === 0) {
+    alert("Please select both target and features first.");
+    return;
+  }
+
+  log.innerHTML = "🔍 Running AutoML... Please wait.";
+
+  fetch(`/modeling/modeldev/${fileId}/automl-recommend`, {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target, features, objective })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      let html = `✅ <strong>${data.message}</strong><br><br>`;
+      html += `<strong>Top Models:</strong><br>`;
+      const metricPriority = ["Accuracy", "F1 Score", "R2", "ROC AUC", "Adjusted R2", "Precision", "Recall", "Mean Absolute Error", "Mean Squared Error"];
+
+if (data.models && data.models.length > 0) {
+  data.models.forEach((model, index) => {
+    html += `<div><strong>${index + 1}. ${model.name}</strong><br>`;
+    metricPriority.forEach(metric => {
+      if (model.metrics[metric] !== undefined) {
+        html += `&nbsp;&nbsp;${metric}: ${model.metrics[metric]}<br>`;
+      }
+    });
+    html += `</div><br>`;
+  });
+} else {
+  html += "No models found.";
+}
+
+log.innerHTML = html;
+} else {
+  log.innerHTML = `❌ Error: ${data.error || "Unknown error"}`;
+}
+})
+.catch(err => {
+  console.error("Error during AutoML recommendation:", err);
+  log.innerHTML = `❌ AutoML failed: ${err.message}`;
+});
+}
+
+function saveModel() {
+  alert("Model auto-saved.");
+}
+
+function predictNew() {
+  alert("Feature: Upload CSV for prediction coming soon.");
+}
+
+function openNotebook() {
+  window.open(`/modeling/modeldev/${fileId}/notebook`, '_blank');
+}
+
+function downloadModel() {
+  window.open(`/modeling/modeldev/download/${fileId}_model.pkl`, '_blank');
+}
+
+function downloadNotebook() {
+  window.open(`/download-notebook/${fileId}`, '_blank');
+}
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Database Schema Description</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --card-dark: #161b22;
+      --text-light: #c9d1d9;
+      --input-bg: #21262d;
+      --border-color: #30363d;
+      --border-radius: 1rem;
+      --gradient-main: linear-gradient(90deg, #00e0ff, #00ffd5, #3385ff, #ff4fff, #9933ff);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 1.125rem;
+      display: block;
+      margin: 1rem 0 0.5rem;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      color: var(--text-light);
+      margin-bottom: 1.25rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background-color: var(--card-dark);
+      color: var(--text-light);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    th, td {
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    th {
+      background: var(--input-bg);
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: var(--input-bg);
+    }
+
+    button {
+      background: var(--gradient-main);
+      color: white;
+      border: none;
+      padding: 1rem;
+      margin: 1rem;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: calc(50% - 2rem);
+      transition: filter 0.3s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.2);
+    }
+
+    @media (max-width: 768px) {
+      button {
+        width: 100%;
+        margin: 0.5rem 0;
+      }
+    }
+
+    /* Header */
+    header {
+      background-color: var(--card-dark);
+      color: var(--text-light);
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-image {
+      height: 80px;
+      margin-right: 10px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    /* Footer */
+    footer {
+      background-color: var(--card-dark);
+      color: var(--text-light);
+      padding: 1rem;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      width: 100%;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="/static/logo-no-background.png" alt="DataPilot Logo" class="logo-image">
+    </div>
+    <h1>DataPilot</h1>
+  </header>
+
+  <main style="flex: 1;">
+    <h1>Database Schema Overview</h1>
+
+    <label for="queryLang">Select Query Language:</label>
+    <select id="queryLang">
+      <option value="SQL">SQL</option>
+      <option value="NoSQL">NoSQL</option>
+      <option value="Python">Python (Pandas)</option>
+      <option value="Spark">Apache Spark</option>
+    </select>
+
+    <table id="schemaTable">
+      <thead>
+        <tr>
+          <th>Table Name</th>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Sample Values</th>
+          <th>Annotation</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div style="text-align: center;">
+      <button onclick="saveSchema()">Save Description</button>
+      <button onclick="proceedToCleaning()">Clean/Visualize Data Using Natural Language</button>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 DataPilot. All rights reserved.</p>
+  </footer>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    const fileId = window.location.pathname.split('/').pop();  // Extract file_id from URL
+
+
+    // ✅ Function to load schema dynamically
+            function loadSchema() {
+            const fileId = window.location.pathname.split('/').pop();  // Extract file_id from URL
+
+            $.ajax({
+                url: `/get-schema/${fileId}`,   // Use correct route
+                type: 'GET',
+                contentType: 'application/json',
+                success: function(response) {
+                    if (!response || !response.schema) {
+                        alert('No schema data available.');
+                        return;
+                    }
+
+                    let schemaTable = $('#schemaTable tbody');
+                    schemaTable.empty();
+
+                    const schema = response.schema;
+
+                    schemaTable.append(`
+                        <tr>
+                            <td>File ID</td>
+                            <td>${schema.file_id}</td>
+                            <td colspan="3">Total Rows: ${schema.row_count}</td>
+                        </tr>
+                    `);
+
+                    schema.columns.forEach(column => {
+                        let row = `
+                            <tr>
+                                <td>Dataset</td>
+                                <td>${column}</td>
+                                <td>N/A</td>
+                                <td>N/A</td>
+                                <td>
+                                    <input type="text" placeholder="Describe column (e.g., Customer ID)">
+                                </td>
+                            </tr>
+                        `;
+                        schemaTable.append(row);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading schema:', error);
+                    alert('Error loading schema: ' + error);
+                }
+            });
+        }
+
+    // ✅ Save schema description
+    function saveSchema() {
+    let descriptions = [];
+
+    $('#schemaTable tbody tr').each(function () {
+        let tableName = $(this).find('td:nth-child(1)').text();
+        let columnName = $(this).find('td:nth-child(2)').text();
+        let dataType = $(this).find('td:nth-child(3)').text();
+        let annotation = $(this).find('input').val();
+
+        descriptions.push({
+            table: tableName,
+            column: columnName,
+            type: dataType,
+            annotation: annotation
+        });
+    });
+
+    let queryLang = $('#queryLang').val();
+
+    // ✅ Dynamically construct the save-schema URL
+    $.ajax({
+        url: `/save-schema/${fileId}`,  // Use file_id in the route
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            schema: descriptions,
+            query_language: queryLang
+        }),
+        success: function(response) {
+            alert('Schema saved successfully');
+        },
+        error: function(xhr, status, error) {
+            console.error('Error saving schema:', error);
+            alert('Error saving schema: ' + error);
+        }
+    });
+}
+
+
+    // ✅ Navigate to Cleaning & Visualization
+    function proceedToCleaning() {
+    window.location.href = `/cleaning/${fileId}`;
+}
+
+    // ✅ Load schema on page load
+    $(document).ready(function () {
+        loadSchema();
+    });
+</script>
+
+</body>
+</html>

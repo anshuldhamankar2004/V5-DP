@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload or Connect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --card-dark: #161b22;
+      --text-light: #c9d1d9;
+      --input-bg: #21262d;
+      --border-color: #30363d;
+      --border-radius: 1rem;
+      --gradient-main: linear-gradient(90deg, #00e0ff, #00ffd5, #3385ff, #ff4fff, #9933ff);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .intro-text {
+      text-align: center;
+      max-width: 1000px;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      justify-content: center;
+      width: 100%;
+      max-width: 1400px;
+      flex: 1;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--card-dark);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+      padding: 2rem;
+      min-width: 500px;
+      flex: 1;
+      animation: fadeInUp 0.6s ease;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-light);
+      font-size: 1.125rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin-bottom: 1.25rem;
+      font-size: 1.125rem;
+      color: var(--text-light);
+    }
+
+    input::placeholder {
+      color: #8b949e;
+    }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: var(--gradient-main);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.3s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.2);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .card {
+        min-width: 90%;
+      }
+    }
+
+    /* Header Styles */
+    header {
+      background-color: var(--card-dark);
+      color: var(--text-light);
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+      width: 100%;
+      position: sticky; /* Make header sticky */
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background-color: #fff;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .logo-image {
+      height: 80px;
+      margin-right: 10px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    /* Footer Styles */
+    footer {
+      background-color: var(--card-dark);
+      color: var(--text-light);
+      padding: 1rem;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      width: 100%;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='logo-no-background.png') }}" alt="DataPilot Logo" class="logo-image">
+
+    </div>
+  </header>
+
+  <main>
+    <h2>Upload or Connect to Any Database</h2>
+    <div class="intro-text">
+      <p><strong>Revolutionizing AI/ML Model Development — One Upload at a Time.</strong></p>
+      <p>
+        Upload your dataset or connect to your database and watch our intelligent pipeline handle everything
+        from cleaning to model building. No code, no confusion — just rapid insights and deployable models,
+        built for speed, scale, and simplicity.
+      </p>
+    </div>
+
+    <div class="container">
+      <form id="fileUploadForm" enctype="multipart/form-data" class="card">
+        <h2>Upload CSV/XLSX File</h2>
+        <label for="fileInput">Select File</label>
+        <input type="file" id="fileInput" name="file" accept=".csv, .xlsx" required />
+        <button type="submit">Upload File</button>
+      </form>
+
+      <form id="dbConnectForm" class="card">
+        <h2>Or Connect to Database</h2>
+        <label for="dbType">Select Database Type</label>
+        <select id="dbType" name="dbType" required>
+          <option value="sql">SQL (MySQL, PostgreSQL, MSSQL)</option>
+          <option value="nosql">NoSQL (MongoDB, Firebase)</option>
+          <option value="apache">Apache (Hadoop, Spark)</option>
+          <option value="aws">AWS (Redshift, RDS)</option>
+          <option value="azure">Azure (SQL DB, CosmosDB)</option>
+          <option value="gcp">GCP (BigQuery, CloudSQL)</option>
+          <option value="snowflake">Snowflake</option>
+        </select>
+        <label for="host">Host</label>
+        <input type="text" id="host" name="host" placeholder="e.g., localhost or IP address" required />
+        <label for="port">Port</label>
+        <input type="text" id="port" name="port" placeholder="e.g., 3306, 5432" required />
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Database username" required />
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Database password" required />
+        <label for="database">Database Name</label>
+        <input type="text" id="database" name="database" placeholder="Database name" required />
+        <label for="table">Table Name (Optional)</label>
+        <input type="text" id="table" name="table" placeholder="Table name" />
+        <button type="submit">Connect to Database</button>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 DataPilot. All rights reserved.</p>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    const UPLOAD_URL = "/upload";
+    const DB_CONNECT_URL = "/connect";
+
+    $("#fileUploadForm").on("submit", function (event) {
+      event.preventDefault();
+      let formData = new FormData(this);
+
+      $.ajax({
+        url: UPLOAD_URL,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+          if (response.file_id) {
+            alert("File uploaded successfully!");
+            window.location.href = `/describe/${response.file_id}`;
+          } else {
+            alert("Error: " + response.error);
+          }
+        },
+        error: function (xhr, status, error) {
+          alert("Error uploading file: " + error);
+        }
+      });
+    });
+
+    $("#dbConnectForm").on("submit", function (event) {
+      event.preventDefault();
+
+      let rawTable = $("#table").val();
+      let formattedTable = rawTable.includes("/") ? rawTable.replace("/", ".") : rawTable;
+
+      let formData = {
+        dbType: $("#dbType").val(),
+        host: $("#host").val(),
+        port: $("#port").val(),
+        username: $("#username").val(),
+        password: $("#password").val(),
+        database: $("#database").val(),
+        table: formattedTable
+      };
+
+      $.ajax({
+        url: DB_CONNECT_URL,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function (response) {
+          console.log("🔥 Response:", response);
+
+          if (response.success && response.file_id) {
+            alert("Database connected successfully!");
+            window.location.href = `/describe/${response.file_id}`;
+          } else {
+            alert("Database connection failed: " + response.error);
+          }
+        },
+        error: function (xhr, status, error) {
+          alert("Database connection error: " + error);
+        }
+      });
+    });
+
+    function displayPreview(previewData) {
+      let previewTable = $('#previewTable tbody');
+      previewTable.empty();
+
+      let headerRow = $('<tr>');
+      previewData[0].forEach(header => {
+        headerRow.append($('<th>').text(header));
+      });
+      previewTable.append(headerRow);
+
+      previewData.slice(1).forEach(row => {
+        let tr = $('<tr>');
+        row.forEach(cell => {
+          tr.append($('<td>').text(cell));
+        });
+        previewTable.append(tr);
+      });
+    }
+  </script>
+</body>
+</html>

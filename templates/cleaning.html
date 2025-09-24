@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Cleaning & Visualization on DataPilot.chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --card-dark: #161b22;
+      --text-light: #c9d1d9;
+      --input-bg: #21262d;
+      --border-color: #30363d;
+      --border-radius: 1rem;
+      --gradient-main: linear-gradient(90deg, #00e0ff, #00ffd5, #3385ff, #ff4fff, #9933ff);
+      --success-color: #2ea043;
+      --warning-color: #d29922;
+      --info-color: #1f6feb;
+      --special-color: #6f42c1;
+      --danger-color: #da3633;
+      --detail-color: #da3663;
+    }
+
+    /* Reset and Global Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      /*zoom: 100%;*/ /* Reset zoom level to 100% */
+    }
+
+    h1 {
+      text-align: center;
+      margin: 1rem 0;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2rem;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 70% 30%;
+      grid-template-rows: auto 1fr auto;
+      gap: 1rem;
+      padding: 1rem;
+      box-sizing: border-box;
+      flex-grow: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Shared Box Styling */
+    .table-preview,
+    .user-input,
+    .output-box {
+      background-color: var(--card-dark);
+      border-radius: var(--border-radius);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+      padding: 1rem;
+      overflow: auto;
+    }
+
+    .table-preview h3,
+    .output-box h3,
+    .user-input h3 {
+      /*color: var(--success-color);  Remove the direct color */
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      font-size: 1.25rem;
+      background: var(--gradient-main);  /* Apply gradient to heading */
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Table Preview Styling */
+    .table-preview {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+    }
+
+    #dataTable {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    #dataTable table {
+      width: auto;
+      border-collapse: collapse;
+    }
+
+    #dataTable th, #dataTable td {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
+      font-size: 1rem; /* Increased font size for better zoom scaling */
+    }
+
+    #dataTable th {
+      background-color: var(--input-bg);
+      font-weight: 600;
+    }
+
+    /* Output Sections */
+    .output-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      grid-column: 2 / 3;
+      grid-row: 1 / 3;
+    }
+
+    .output-box {
+      flex: 1;
+      font-size: 1rem; /* Increased font size for better zoom scaling */
+    }
+
+    .output-box h3 {
+       background: var(--gradient-main);  /* Apply gradient to heading */
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 1.1rem;
+    }
+
+    /* User Input */
+    .user-input {
+      grid-column: 1 / 2;
+      grid-row: 3 / 4;
+    }
+
+     .user-input h3 {
+      background: var(--gradient-main);  /* Apply gradient to heading */
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 1.1rem;
+    }
+
+    .user-input input[type="text"] {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      color: var(--text-light);
+    }
+
+    .user-input label {
+      margin-right: 0.5rem;
+      font-size: 0.875rem;
+      color: #8b949e;
+    }
+
+    .user-input input[type="radio"] {
+      margin-right: 0.25rem;
+    }
+
+    .submit {
+      background-color: var(--success-color);
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 0.5rem;
+      color: #ffffff;
+      font-size: 1rem; /* Increased font size for better zoom scaling */
+      margin-top: 0.5rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .submit:hover {
+      filter: brightness(1.1);
+    }
+
+    /* Buttons Panel */
+    .buttons {
+      grid-column: 2 / 3;
+      grid-row: 3 / 4;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: stretch;
+      gap: 0.6rem;
+    }
+
+    .buttons button {
+      padding: 0.75rem;
+      font-size: 1rem; /* Increased font size for better zoom scaling */
+      border: none;
+      border-radius: 0.5rem;
+      color: #ffffff;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+
+    .buttons button:hover {
+      filter: brightness(1.1);
+    }
+
+    .save {
+      background-color: var(--success-color);
+    }
+
+    .rollback {
+      background-color: var(--warning-color);
+    }
+
+    .report {
+      background-color: var(--info-color);
+    }
+
+    .custom-clean {
+      background-color: var(--special-color);
+    }
+
+    .model {
+      background-color: var(--danger-color);
+    }
+
+    .details {
+      background-color: var(--detail-color);
+    }
+
+    #translatedQueryContent strong {
+      color: var(--text-light);
+    }
+
+    #translatedQueryContent em {
+      color: #8b949e;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        height: auto;
+      }
+
+      .buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .buttons button {
+        flex: 1 1 48%;
+        margin: 0.3rem 1%;
+      }
+
+      .output-section {
+        grid-column: 1 / 2;
+        flex-direction: column;
+      }
+    }
+
+    /* Style for the main content area where custom clean will load */
+    #mainContent {
+      grid-column: 1 / -1; /* Span across all columns */
+      grid-row: 1 / -1;   /* Span across all rows */
+      padding: 1rem;
+      box-sizing: border-box;
+      background-color: var(--bg-dark); /* Match body background */
+      color: var(--text-light);
+      /* Initially hidden, will be shown when custom clean is loaded */
+      display: none;
+    }
+
+    /* Style for the default cleaning interface */
+    #defaultContent {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 70% 30%;
+      grid-template-rows: auto 1fr auto;
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      #defaultContent {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+      }
+    }
+
+    /* Header Styles */
+    header {
+      background-color: var(--card-dark);
+      color: var(--text-light);
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background-color: #fff;
+      border-radius: 50%;
+      margin-right: 0.6rem;
+    }
+
+    .logo-image {
+      height: 60px;
+      margin-right: 0.6rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: var(--text-light);
+    }
+
+    /* Footer Styles */
+    footer {
+      background-color: var(--card-dark);
+      color: var(--text-light);
+      padding: 1rem;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      width: 100%;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='logo-no-background.png') }}" alt="DataPilot Logo" class="logo-image">
+    </div>
+    <h1>Data Cleaning, Visualization & Analysis</h1>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <div id="defaultContent">
+        <div class="table-preview" id="tablePreview">
+          <h3>Table Preview</h3>
+          <div id="dataTable">Loading...</div>
+        </div>
+
+        <div class="output-section">
+
+          <div class="output-box" id="vizOutput">
+            <h3>Visualization Output</h3>
+            <div id="vizContent">Graphs will appear here...</div>
+          </div>
+
+          <div class="output-box" id="aiQueryOutput">
+            <h3>AI-Generated Query</h3>
+            <div id="aiQueryContent">AI query will appear here...</div>
+            <div id="translatedQueryContent"><strong>Translated Query:</strong> <em>Waiting...</em></div>
+          </div>
+
+          <div class="output-box" id="analysisOutput">
+            <h3>Analysis Query Output</h3>
+            <div id="analysisContent">Query results will appear here...</div>
+          </div>
+
+        </div>
+
+        <div class="user-input">
+          <h3>Data Source</h3>
+          <label><input type="radio" name="dataSource" value="csv" checked> CSV</label>
+          <label><input type="radio" name="dataSource" value="sql"> MySQL</label>
+
+          <h3>User Query</h3>
+          <input type="text" id="userQuery" placeholder="Enter your query...">
+          <button class="submit" onclick="submitQuery()">Submit</button>
+        </div>
+
+        <div class="buttons">
+          <button class="save" onclick="saveData()">Save</button>
+          <button class="rollback" onclick="rollbackChanges()">Rollback</button>
+          <button class="report" onclick="saveNotebook()">Save Notebook</button>
+          <button class="custom-clean" onclick="goToCustomClean()"> Custom Clean</button>
+          <button class="model" onclick="window.location.href='/modeling/modeldev/{{ file_id }}'">Proceed for Model Dev.</button>
+          <button class="details" onclick="window.location.href='/data_details/{{ file_id }}'">View Advanced Data Details</button>
+        </div>
+      </div>
+
+      <div id="mainContent">
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 DataPilot. All rights reserved.</p>
+  </footer>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+const fileId = window.location.pathname.split('/').pop();
+console.log("🔥 File ID:", fileId);
+
+function goToCustomClean() {
+    const fileIdFromUrl = window.location.pathname.split('/').pop();
+
+    if (!fileIdFromUrl || fileIdFromUrl === 'cleaning') {
+        console.error("❌ No valid file ID found in the URL.");
+        return;
+    }
+
+    // Redirect the browser to the actual page URL
+    window.location.href = `/custom_clean/${fileIdFromUrl}`;
+}
+
+
+// Auto-load preview when page loads
+$(document).ready(function () {
+    loadTablePreview();
+});
+
+// Save notebook
+function saveNotebook() {
+    console.log("💾 Saving notebook...");
+    const url = `/download-notebook/${fileId}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.blob();
+        })
+        .then(blob => {
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `${fileId}_session.ipynb`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('❌ Error saving notebook:', error);
+            alert('Failed to save notebook.');
+        });
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+}
+
+// Rollback logic
+function rollbackChanges() {
+    console.log("🔁 Rolling back changes...");
+    console.log("➡️ File ID used:", fileId);
+
+    $.ajax({
+        url: `/rollback/${fileId}`,
+        method: "POST",
+        success: function (response) {
+            console.log("✅ Response from server:", response);
+            if (response.success) {
+                if (response.info) {
+                    alert("⚠️ " + response.info);
+                } else {
+                    alert("✅ Changes rolled back successfully!");
+                }
+                if (response.data && Array.isArray(response.data)) {
+                    renderTable(response.data);
+                } else {
+                    console.warn("⚠️ No valid data to render from rollback response.");
+                    $("#dataTable").html("<p>No data returned from rollback.</p>");
+                }
+            } else {
+                alert("❌ Rollback failed: " + (response.error || "Unknown error"));
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("❌ AJAX Error:", error);
+            console.error("❌ Response text:", xhr.responseText);
+            alert("❌ Failed to rollback changes. Server says: " + xhr.responseText);
+        }
+    });
+}
+
+// Save cleaned data
+function saveData() {
+    console.log("💾 Save button clicked!");
+    $.ajax({
+        url: `/save/${fileId}`,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ filename: "cleaned_data.csv" }),
+        success: function (response) {
+            if (response.success) {
+                alert("✅ " + response.message);
+            } else {
+                alert("❌ Failed to save data: " + (response.error || "Unknown error"));
+            }
+        },
+        error: function (xhr) {
+            console.error("❌ Save error:", xhr.responseText);
+            alert("❌ Failed to save data. Please try again.");
+        }
+    });
+}
+
+// Load data preview
+function loadTablePreview() {
+    $('#dataTable').html('Loading...');
+
+    $.ajax({
+        url: `/get-data/${fileId}`,
+        method: 'GET',
+        success: function (data) {
+            console.log("✅ Data from /get-data:", data);
+            console.log("✅ Is data.data an array?", Array.isArray(data.data));
+
+            if (data.error) {
+                $('#dataTable').html(`<p>Error: ${data.error}</p>`);
+            } else if (Array.isArray(data.data)) {
+                renderTable(data.data);
+            } else {
+                console.error("❌ Unexpected data format:", data);
+                $('#dataTable').html(`<p>Invalid data structure returned.</p>`);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.log("❌ AJAX Error:", xhr.responseText);
+            $('#dataTable').html(`<p>Failed to load data. Error: ${xhr.responseText}</p>`);
+        }
+    });
+}
+
+// Render table from array of objects
+function renderTable(data) {
+    console.log("Rendering table with data:", data);
+
+    if (!Array.isArray(data)) {
+        console.error("Error: Expected data to be an array, but received:", typeof data);
+        $('#dataTable').html('<p>Error: Invalid data format. Expected an array.</p>');
+        return;
+    }
+
+    if (data.length === 0) {
+        console.warn("Warning: Data array is empty.");
+        $('#dataTable').html('<p>No data available.</p>');
+        return;
+    }
+
+    if (typeof data[0] !== 'object' || data[0] === null) {
+        console.error("Error: Expected each item in data to be an object. First item:", data[0]);
+        $('#dataTable').html('<p>Error: Invalid data format. Expected objects within the array.</p>');
+        return;
+    }
+
+    $('#dataTable').empty();
+
+    let tableHtml = '<table border="1" cellspacing="0" cellpadding="5" width="100%">';
+    tableHtml += '<thead><tr>';
+
+    try {
+        const firstItem = data[0];
+        Object.keys(firstItem).forEach(key => {
+            tableHtml += `<th>${key}</th>`;
+        });
+    } catch (err) {
+        console.error("Error extracting column names from first item:", err);
+        $('#dataTable').html('<p>Error: Unable to extract column names.</p>');
+        return;
+    }
+
+    tableHtml += '</tr></thead><tbody>';
+
+    data.forEach((row, rowIndex) => {
+        if (typeof row !== 'object' || row === null) {
+            console.warn(`Warning: Skipping invalid row at index ${rowIndex}. Row data:`, row);
+            return;
+        }
+
+        tableHtml += '<tr>';
+        Object.values(row).forEach(value => {
+            tableHtml += `<td>${value}</td>`;
+        });
+        tableHtml += '</tr>';
+    });
+
+    tableHtml += '</tbody></table>';
+    $('#dataTable').html(tableHtml);
+    console.log("Generated table HTML:", tableHtml);
+}
+
+// Submit query (AI / SQL)
+function submitQuery() {
+    const userQuery = $("#userQuery").val();
+    const dataSource = document.querySelector('input[name="dataSource"]:checked').value;
+
+    if (!userQuery) {
+        alert("Please enter a query!");
+        return;
+    }
+
+    console.log("🔥 Query:", userQuery, "Source:", dataSource);
+
+    const apiUrl = dataSource === 'csv'
+        ? `/query/${fileId}`
+        : `/query-sql/${fileId}`;
+
+    const requestData = {
+        query: userQuery,
+        query_language: dataSource === 'csv' ? "python" : "sql",
+        data_source: dataSource
+    };
+
+    $.ajax({
+        url: apiUrl,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(requestData),
+        success: function (response) {
+            console.log("✅ Response:", response);
+
+            $("#aiQueryContent").html("");
+            $("#translatedQueryContent").html("");
+            $("#analysisContent").html("");
+            $("#visualizationOutput").html("");
+
+            if (response.error) {
+                $("#aiQueryContent").html(`<p>Error: ${response.error}</p>`);
+                $("#translatedQueryContent").html(`<strong>Translated Query:</strong> <em>Failed to translate</em>`);
+                return;
+            }
+
+            if (!response.success && !response.preview && !response.result) {
+                $("#aiQueryContent").html(`<p>Unknown error occurred.</p>`);
+                return;
+            }
+
+            const aiQuery = response.ai_query || "No AI Query";
+            const translatedQuery = response.translated_query || "No Translated Query";
+
+            $("#aiQueryContent").html(`<p><strong>AI Query:</strong> ${aiQuery}</p>`);
+            $("#translatedQueryContent").html(`<strong>Translated Query:</strong> <em>${translatedQuery}</em>`);
+
+            if (dataSource === 'sql') {
+                if (Array.isArray(response.result)) {
+                    const tableHtml = generateSqlTable(response.result);
+                    $("#analysisContent").html(tableHtml);
+                } else {
+                    $("#analysisContent").html(`<p>${response.result}</p>`);
+                }
+            } else {
+                $("#analysisContent").html(`<p><strong>Query Type:</strong> ${response.query_type}</p>`);
+
+                if (response.query_type === "visualization" && response.visualization_output) {
+                    $("#vizContent").html(`<img src="${response.visualization_output}" alt="Visualization" style="max-width: 100%;">`);
+                } else if (response.query_type === "modification" && response.preview && Array.isArray(response.preview)) {
+                    renderTable(response.preview); // Update the table directly with the preview
+                } else if (response.result) {
+                    $("#analysisContent").append(`<p><strong>Result:</strong> ${JSON.stringify(response.result)}</p>`);
+                } else {
+                    loadTablePreview(); // Fallback to reloading if no specific handling
+                }
+            }
+        },
+        error: function (xhr) {
+            console.log("❌ Query Error:", xhr.responseText);
+            $("#aiQueryContent").html(`<p>Failed to process query. Error: ${xhr.responseText}</p>`);
+            $("#translatedQueryContent").html(`<strong>Translated Query:</strong> <em>Failed to fetch</em>`);
+        }
+    });
+}
+// Run SQL and reload preview
+async function runQuery(fileId, query) {
+    const loadingSpinner = document.getElementById('loading-spinner');
+    try {
+        loadingSpinner.style.display = 'block';
+
+        const queryResponse = await fetch(`/query-sql/${fileId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+        });
+
+        const queryData = await queryResponse.json();
+
+        if (queryData.success) {
+            console.log('✅ Query executed successfully');
+            await reloadTable(fileId);
+        } else {
+            console.error('❌ Query execution failed:', queryData.error);
+            alert(`Error: ${queryData.error}`);
+        }
+    } catch (error) {
+        console.error('❌ Error executing query:', error);
+    } finally {
+        loadingSpinner.style.display = 'none';
+    }
+}
+
+// Reload the table (AJAX preview refresh)
+async function reloadTable(fileId) {
+    const loadingSpinner = document.getElementById('loading-spinner');
+
+    try {
+        loadingSpinner.style.display = 'block';
+
+        const reloadResponse = await fetch(`/reload/${fileId}`);
+        const reloadData = await reloadResponse.json();
+
+        if (reloadData.success) {
+            console.log('✅ Table reloaded successfully');
+            if (reloadData.preview && Array.isArray(reloadData.preview)) {
+                renderTable(reloadData.preview);
+            } else {
+                $("#dataTable").html("<p>Preview data is empty or invalid.</p>");
+            }
+        } else {
+            console.error('❌ Failed to reload table:', reloadData.error);
+            alert(`Reload error: ${reloadData.error}`);
+        }
+    } catch (error) {
+        console.error('❌ Error reloading table:', error);
+    } finally {
+        loadingSpinner.style.display = 'none';
+    }
+}
+</script>
+
+</body>
+</html>

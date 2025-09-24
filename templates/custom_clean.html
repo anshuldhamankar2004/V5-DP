@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Data Cleaning - DataPilot.chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --card-dark: #161b22;
+            --text-light: #c9d1d9;
+            --accent-green: #2ea043;
+            --accent-green-hover: #238636;
+            --accent-blue: #58a6ff;
+            --accent-blue-hover: #3d8bff;
+            --input-bg: #21262d;
+            --border-color: #30363d;
+            --border-radius: 1rem;
+            --error-red: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--accent-green);
+            font-size: 2.5rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 70% 30%;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1800px;
+        }
+
+        .table-preview {
+            grid-column: 1 / 1;
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            overflow: auto;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+
+        .table-preview h3 {
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .table-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .table-preview th,
+        .table-preview td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .table-preview th {
+            background-color: #2a3138;
+            font-weight: 600;
+        }
+
+        .controls {
+            grid-column: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .foldable-section {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 1.5rem;
+            cursor: pointer;
+        }
+
+        .section-header h2 {
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        .section-content {
+            padding: 0 1.5rem 1.5rem;
+            display: none;
+        }
+
+        .section-content.open {
+            display: block;
+        }
+
+        .section label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .section select,
+        .section input[type="text"],
+        .section input[type="number"] {
+            width: 100%;
+            padding: 0.6rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.3rem;
+            background-color: var(--input-bg);
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .section select[multiple] {
+            height: 6rem;
+        }
+
+        .section button {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .section button:hover {
+            background-color: var(--accent-green-hover);
+        }
+
+        .section button:disabled {
+            background-color: #6b7280;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .section button:disabled:hover {
+            background-color: #6b7280;
+        }
+
+        .visualizations {
+            grid-column: 1 / 2;
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+            margin-top: 1.5rem;
+        }
+
+        .visualizations h3 {
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .visualization-output {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 0.3rem;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.8rem;
+            min-height: 4rem;
+        }
+
+        .output-message {
+            margin-top: 0.5rem;
+            padding: 0.6rem;
+            border-radius: 0.3rem;
+            background-color: #2a3138;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            background-color: #311818;
+            border-color: #9f1239;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .table-preview {
+                grid-column: 1 / 1;
+            }
+
+            .controls {
+                grid-column: 1 / 1;
+            }
+
+            .visualizations {
+                grid-column: 1 / 1;
+                margin-top: 1rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <h1>🧹 Custom Data Cleaning</h1>
+
+    <div class="container">
+        <div class="table-preview">
+            <h3>Sample Data</h3>
+            <div id="sampleDataTable">
+                {% if sample_data %}
+                <table>
+                    <thead>
+                        <tr>
+                            {% for key in sample_data[0].keys() %}
+                            <th>{{ key }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in sample_data %}
+                        <tr>
+                            {% for value in row.values() %}
+                            <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No sample data available.</p>
+                {% endif %}
+            </div>
+        </div>
+
+
+
+        <div class="controls">
+            <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2>⚙️ Missing Data Handling</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="missing-cols">Select Columns</label>
+                    <select id="missing-cols" multiple></select>
+                    <label for="missing-method">Method</label>
+                    <select id="missing-method">
+                        <option value="mean">Mean Imputation</option>
+                        <option value="median">Median Imputation</option>
+                        <option value="knn">KNN Imputation</option>
+                        <option value="regression">Regression Imputation</option>
+                        <option value="drop_rows">Delete Rows</option>
+                        <option value="drop_cols">Delete Columns</option>
+                        <option value="custom">Custom Value</option>
+                    </select>
+                    <input type="text" id="custom-missing-value" placeholder="Enter custom value" class="hidden">
+                    <div id="knn-options" class="hidden">
+                        <label for="knn-neighbors">Neighbors (K)</label>
+                        <input type="number" id="knn-neighbors" value="5" min="1">
+                    </div>
+                    <button onclick="handleMissingData()">Apply</button>
+                    <div id="missing-output" class="output-message"></div>
+                </div>
+            </div>
+
+
+            <div class="controls">
+            <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2><i class="fas fa-terminal"></i> Custom Query</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="customQuery">Enter Pandas Query</label>
+                    <textarea id="customQuery" class="form-control" rows="3" placeholder="e.g., df[df['column'] > 10]"></textarea>
+                    <button onclick="applyCustomQuery()">Apply Query</button>
+                    <div id="queryResult" class="output-message"></div>
+                </div>
+            </div>
+            </div>
+
+            <div class="foldable-section">
+            <div class="section-header" onclick="toggleSection(this.parentNode)">
+                <h2>📊 Data Visualization</h2>
+                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="section-content section">
+                <label for="plot-type">Select Plot Type</label>
+                <select id="plot-type">
+                    <option value="hist">Histogram</option>
+                    <option value="scatter">Scatter Plot</option>
+                    <option value="bar">Bar Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="box">Box Plot</option>
+                </select>
+
+                <div id="plot-options">
+                    </div>
+
+                <button onclick="generateVisualization()">Generate Plot</button>
+                <div id="visualization-output" class="output-message"></div>
+                <div id="plot-container">
+                    </div>
+            </div>
+        </div>
+            <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2>📊 Data Type Conversion</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="conversion-col">Select Column</label>
+                    <select id="conversion-col"></select>
+                    <label for="new-type">Convert To</label>
+                    <select id="new-type">
+                        <option value="number">Number</option>
+                        <option value="string">String</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="datetime">Datetime</option>
+                        <option value="category">Category</option>
+                    </select>
+                    <button onclick="convertDataType()">Apply</button>
+                    <div id="conversion-output" class="output-message"></div>
+                </div>
+            </div>
+
+
+            <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2>🔤 Text Preprocessing</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="text-cols">Select Text Columns</label>
+                    <select id="text-cols" multiple></select>
+                    <label><input type="checkbox" id="lowercase"> Lowercase</label>
+                    <label><input type="checkbox" id="remove-punctuation"> Remove Punctuation</label>
+                    <label><input type="checkbox" id="remove-stopwords"> Remove Stopwords</label>
+                    <label><input type="checkbox" id="stemming"> Stemming</label>
+                    <label><input type="checkbox" id="lemmatization"> Lemmatization</label>
+                    <button onclick="applyTextPreprocessing()">Apply</button>
+                    <div id="text-output" class="output-message"></div>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+            <div class="section-header" onclick="toggleSection(this.parentNode)">
+                <h2>📈 Outlier Detection and Handling</h2>
+                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="section-content section">
+                <label for="outlier-cols">Select Numerical Columns</label>
+                <select id="outlier-cols" multiple></select>
+                <label for="outlier-method">Method</label>
+                <select id="outlier-method">
+                    <option value="zscore">Z-Score</option>
+                    <option value="iqr">IQR</option>
+                    <option value="boxplots">Boxplots</option>
+                    <option value="isolation_forest">Isolation Forest</option>
+                </select>
+                <div id="zscore-params" class="hidden">
+                    <label for="zscore-threshold">Threshold</label>
+                    <input type="number" id="zscore-threshold" value="3" min="1">
+                </div>
+                <div id="iqr-params" class="hidden">
+                    <label for="iqr-factor">Factor</label>
+                    <input type="number" id="iqr-factor" value="1.5" min="0">
+                </div>
+                 <div id="boxplots-params" class="hidden">
+                    <label for="boxplots-threshold">Threshold</label>
+                    <input type="number" id="boxplots-threshold" value="1.5" min="0">
+                </div>
+                <div id="isolation_forest_params" class="hidden">
+                    <label for="isolation_forest_contamination">Contamination (0-0.5)</label>
+                    <input type="number" id="isolation_forest_contamination" value="0.1" min="0" max="0.5" step="0.01">
+                </div>
+                <label for="outlier-handling">Handling Strategy</label>
+                <select id="outlier-handling">
+                    <option value="remove">Remove Outliers</option>
+                    <option value="clip">Clip to Bounds</option>
+                    <option value="replace_mean">Replace with Mean</option>
+                    <option value="replace_median">Replace with Median</option>
+                    <option value="replace_custom">Replace with Custom Value</option>
+                </select>
+                <input type="text" id="custom-outlier-value" placeholder="Enter custom value" class="hidden">
+                <button onclick="handleOutliers()">Apply</button>
+                <div id="outlier-output" class="output-message"></div>
+            </div>
+        </div>
+
+
+        <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2>0/1 One-Hot Encoding</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="onehot-cols">Columns to Encode</label>
+                    <select id="onehot-cols" multiple></select>
+                    <label for="onehot-prefix">Prefix (optional)</label>
+                    <input type="text" id="onehot-prefix" placeholder="Encoded">
+                    <label for="onehot-drop">Drop Original Column</label>
+                    <select id="onehot-drop">
+                        <option value="false">No</option>
+                        <option value="first">Yes, First</option>
+                    </select>
+                    <label for="onehot-handle-missing">Handle Missing</label>
+                    <select id="onehot-handle-missing">
+                        <option value="error">Error</option>
+                        <option value="ignore">Ignore</option>
+                    </select>
+                    <label for="onehot-dtype">Encode to</label>
+                    <select id="onehot-dtype">
+                        <option value="int">Integer</option>
+                        <option value="float">Float</option>
+                    </select>
+                    <button onclick="applyOneHotEncoding()">Apply</button>
+                    <div id="onehot-output" class="output-message"></div>
+                </div>
+            </div>
+
+
+            <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2>➕ Feature Engineering</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="feature-engineering-method">Method</label>
+                    <select id="feature-engineering-method">
+                        <option value="polynomial">Polynomial Features</option>
+                        <option value="interaction">Interaction Features</option>
+                        <option value="binning">Binning</option>
+                        <option value="domain">Domain-Specific Feature</option>
+                    </select>
+                    <div id="polynomial-params" class="hidden">
+                        <label for="polynomial-cols">Select Columns</label>
+                        <select id="polynomial-cols" multiple></select>
+                        <label for="polynomial-degree">Degree</label>
+                        <input type="number" id="polynomial-degree" value="2" min="2">
+                    </div>
+                    <div id="interaction-params" class="hidden">
+                        <label for="interaction-col1">Column 1</label>
+                        <select id="interaction-col1"></select>
+                        <label for="interaction-col2">Column 2</label>
+                        <select id="interaction-col2"></select>
+                        <label for="interaction-name">New Column Name</label>
+                        <input type="text" id="interaction-name" placeholder="e.g., interaction_feature">
+                    </div>
+                    <div id="binning-params" class="hidden">
+                        <label for="binning-col">Select Column</label>
+                        <select id="binning-col"></select>
+                        <label for="binning-type">Binning Type</label>
+                        <select id="binning-type">
+                            <option value="equal_width">Equal Width</option>
+                            <option value="equal_frequency">Equal Frequency</option>
+                            <option value="custom">Custom Bins</option>
+                        </select>
+                        <label for="binning-bins">Number of Bins</label>
+                        <input type="number" id="binning-bins" value="5" min="2">
+                        <div id="custom-bin-values" class="hidden">
+                            <label for="custom-bins">Custom Bin Edges (comma-separated)</label>
+                            <input type="text" id="custom-bins" placeholder="e.g., 10, 20, 30, 40">
+                        </div>
+                        <label for="binning-labels">Bin Labels (comma-separated, optional)</label>
+                        <input type="text" id="binning-labels" placeholder="e.g., Low, Medium, High">
+                    </div>
+                    <div id="domain-params" class="hidden">
+                        <label for="domain-col">Select Column</label>
+                        <select id="domain-col"></select>
+                        <label for="domain-feature-name">New Feature Name</label>
+                        <input type="text" id="domain-feature-name" placeholder="e.g., age_group">
+                        <label for="domain-function">Feature Function</label>
+                        <select id="domain-function">
+                            <option value="age_group">Age Group (e.g., 0-18, 19-30, 31-50, 51+)</option>
+                            <option value="month_name">Month Name</option>
+                            <option value="day_of_week">Day of Week</option>
+                        </select>
+                    </div>
+                    <button onclick="applyFeatureEngineering()">Apply</button>
+                    <div id="feature-engineering-output" class="output-message"></div>
+                </div>
+            </div>
+
+             <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2> ⚖️ Feature Scaling & Transformation</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="scaling-cols">Select Numerical Columns</label>
+                    <select id="scaling-cols" multiple></select>
+                    <label for="scaling-method">Method</label>
+                    <select id="scaling-method">
+                        <option value="standard">StandardScaler</option>
+                        <option value="minmax">MinMaxScaler</option>
+                        <option value="robust">RobustScaler</option>
+                        <option value="log">Log Transformation</option>
+                        <option value="boxcox">Box-Cox Transformation</option>
+                    </select>
+                    <button onclick="applyScaling()">Apply</button>
+                    <div id="scaling-output" class="output-message"></div>
+                </div>
+            </div>
+
+            <div class="foldable-section">
+                <div class="section-header" onclick="toggleSection(this.parentNode)">
+                    <h2><i class="fas fa-filter"></i> Feature Selection</h2>
+                    <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="section-content section">
+                    <label for="selection-method">Method</label>
+                    <select id="selection-method">
+                        <option value="correlation">Correlation</option>
+                        <option value="rfe">Recursive Feature Elimination (RFE)</option>
+                        <option value="importance">Feature Importance</option>
+                        <option value="pca">PCA</option>
+                    </select>
+                    <div id="correlation-params" class="hidden">
+                        <label for="correlation-threshold">Correlation Threshold (0-1)</label>
+                        <input type="number" id="correlation-threshold" value="0.8" min="0" max="1" step="0.01">
+                    </div>
+                    <div id="rfe-params" class="hidden">
+                        <label for="rfe-target">Target Column</label>
+                        <select id="rfe-target"></select>
+                        <label for="rfe-features">Number of Features to Select</label>
+                        <input type="number" id="rfe-features" value="5" min="1">
+                        <label for="rfe-model">Model</label>
+                        <select id="rfe-model">
+                            <option value="linear">Linear Regression</option>
+                            <option value="logistic">Logistic Regression</option>
+                            <option value="tree">Decision Tree</option>
+                        </select>
+                    </div>
+                    <div id="importance-params" class="hidden">
+                        <label for="importance-target">Target Column</label>
+                        <select id="importance-target"></select>
+                        <label for="importance-model">Model</label>
+                        <select id="importance-model">
+                            <option value="tree">Decision Tree</option>
+                            <option value="forest">Random Forest</option>
+                            <option value="gradient_boosting">Gradient Boosting</option>
+                        </select>
+                    </div>
+                    <div id="pca-params" class="hidden">
+                        <label for="pca-components">Number of Components</label>
+                        <input type="number" id="pca-components" value="2" min="1">
+                    </div>
+
+                    <button onclick="applyFeatureSelection()">Apply</button>
+                    <div id="selection-output" class="output-message"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="visualizations">
+            <h3>Actions & Output</h3>
+            <div id="process-output" class="visualization-output">
+                </div>
+            <button onclick="applyChanges()">Apply All Changes</button>
+            <button onclick="resetChanges()">Reset</button>
+            <button onclick="saveNotebook()">Download Notebook</button>
+            <button onclick="window.location.href='/modeling/modeldev/{{ file_id }}'">Proceed to model Dev</button>
+            <button onclick="window.location.href='/data_details/{{ file_id }}'">View Advanced Data Details</button>
+
+
+        </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+(function($) {
+    window.fileId = window.fileId || "{{ file_id }}";
+
+
+    window.fileId = window.fileId || "{{ file_id }}";
+
+    window.toggleSection = function(section) {
+        const content = $(section).find('.section-content');
+        const icon = $(section).find('.toggle-icon');
+        content.slideToggle();
+        icon.toggleClass('fa-chevron-down fa-chevron-up');
+    };
+
+    window.applyCustomQuery = function() {
+        const query = $('#customQuery').val();
+        const fileId = window.fileId;
+
+        $.ajax({
+            url: `/api/clean/${fileId}/query`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ query: query }),
+            success: res => {
+                console.log('✅ applyCustomQuery() - Success:', res);
+                $('#queryResult').text(res.message || 'Query executed.');
+                if (res.preview) {
+                    updateSampleTable(res.preview); // Assuming you have this function
+                } else if (res.result) {
+                    $('#queryResult').text(`${res.message}: ${res.result}`);
+                }
+            },
+            error: err => {
+                console.error('❌ applyCustomQuery() - Error:', err);
+                $('#queryResult').text(err.responseJSON?.error || 'Error executing query.');
+            }
+        });
+    };
+
+    window.generateVisualization = function() {
+        // ... (rest of your generateVisualization function remains the same) ...
+    };
+
+    window.loadColumnNames = function() {
+        // ... (rest of your loadColumnNames function remains the same) ...
+    };
+
+    window.toggleSection = function(section) {
+        const content = $(section).find('.section-content');
+        const icon = $(section).find('.toggle-icon');
+        content.slideToggle();
+        icon.toggleClass('fa-chevron-down fa-chevron-up');
+    };
+
+    window.generateVisualization = function() {
+        const plotType = $('#plot-type').val();
+        let selectedColumns = {};
+
+        if (plotType === 'hist') {
+            selectedColumns.x = $('#hist-col').val();
+            if (!selectedColumns.x) {
+                $('#visualization-output').text('Please select a column for the histogram.');
+                return;
+            }
+        } else if (plotType === 'scatter') {
+            selectedColumns.x = $('#scatter-x-col').val();
+            selectedColumns.y = $('#scatter-y-col').val();
+            if (!selectedColumns.x || !selectedColumns.y) {
+                $('#visualization-output').text('Please select columns for both X and Y axes.');
+                return;
+            }
+        } else if (plotType === 'bar') {
+            selectedColumns.x = $('#bar-x-col').val();
+            selectedColumns.y = $('#bar-y-col').val();
+            if (!selectedColumns.x) {
+                $('#visualization-output').text('Please select a column for the bar chart categories.');
+                return;
+            }
+        } else if (plotType === 'line') {
+            selectedColumns.x = $('#line-x-col').val();
+            selectedColumns.y = $('#line-y-col').val();
+            if (!selectedColumns.x || !selectedColumns.y) {
+                $('#visualization-output').text('Please select columns for both X and Y axes.');
+                return;
+            }
+        } else if (plotType === 'box') {
+            selectedColumns.y = $('#box-y-col').val();
+            selectedColumns.x = $('#box-x-col').val();
+            if (!selectedColumns.y) {
+                $('#visualization-output').text('Please select a column for the box plot values.');
+                return;
+            }
+        }
+
+        const data = { plot_type: plotType, columns: selectedColumns };
+        console.log('📊 generateVisualization() - Sending data:', JSON.stringify(data));
+
+        $.ajax({
+            url: `/api/clean/${fileId}/visualize`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ generateVisualization() - Success:', res);
+                $('#visualization-output').text(res.message || 'Visualization generated.');
+                if (res.plot_url) {
+                    $('#plot-container').html(`<img src="${res.plot_url}" alt="Generated Plot" style="max-width: 100%;">`);
+                } else if (res.plot_html) {
+                    $('#plot-container').html(res.plot_html);
+                } else {
+                    $('#plot-container').html('<p>No visualization data received.</p>');
+                }
+            },
+            error: err => {
+                console.error('❌ generateVisualization() - Error:', err);
+                const msg = err?.responseJSON?.error || `Error (${err.status}): ${err.statusText}`;
+                $('#visualization-output').text(msg);
+                $('#plot-container').empty();
+            }
+        });
+    };
+
+    window.loadColumnNames = function() {
+        console.log("➡️ loadColumnNames() called");
+        $.ajax({
+            url: `/custom_clean/${fileId}/columns`,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                console.log("✅ loadColumnNames() - Success:", data);
+                if (data?.columns && data?.types) {
+                    const { columns, types } = data;
+                    const allColumnsForSelect = columns.map(col => ({ value: col, text: `${col} (${types[col]})` }));
+                    window.allColumnsForVisualization = allColumnsForSelect;
+
+                    function populateSelect(selector, options) {
+                        const select = $(selector);
+                        select.empty();
+                        for (const option of options) {
+                            select.append(`<option value="${option.value}">${option.text}</option>`);
+                        }
+                    }
+
+                    const num = columns.filter(c => /int|float/i.test(types[c])).map(c => ({ value: c, text: `${c} (${types[c]})` }));
+                    const text = columns.filter(c => /object|string/i.test(types[c])).map(c => ({ value: c, text: `${c} (${types[c]})` }));
+
+                    populateSelect('select[id$="-cols"]', allColumnsForSelect);
+                    populateSelect('select[id$="-col"]', allColumnsForSelect);
+                    populateSelect('select[id$="-target"]', allColumnsForSelect);
+                    populateSelect('select[id^="interaction-col"]', allColumnsForSelect);
+                    populateSelect('#binning-col', num);
+                    populateSelect('#domain-col', allColumnsForSelect);
+                    populateSelect('#scaling-cols', num);
+                    populateSelect('#text-cols', text);
+                    populateSelect('#polynomial-cols', num);
+                    populateSelect('#outlier-cols', num);
+
+                    const plotTypeSelect = $('#plot-type');
+                    plotTypeSelect.empty();
+                    ['hist', 'scatter', 'bar', 'line', 'box'].forEach(type => {
+                        const text = type.charAt(0).toUpperCase() + type.slice(1) + (type === 'bar' ? ' Chart' : (type === 'box' ? ' Plot' : ' Plot'));
+                        plotTypeSelect.append(`<option value="${type}">${text}</option>`);
+                    });
+                    plotTypeSelect.trigger('change');
+
+                } else {
+                    console.warn("⚠️ loadColumnNames() - Invalid data:", data);
+                    $('#process-output').addClass('error-message').text("Invalid column data.");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("❌ loadColumnNames() - AJAX Error:", error, xhr, status);
+                $('#process-output').addClass('error-message').text(`Error: ${error} (${xhr.status})`);
+            }
+        });
+    };
+
+    $(function() {
+        loadColumnNames();
+        $('.section-content').hide();
+        $('.toggle-icon').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        const first = $('.foldable-section').first();
+        first.find('.section-content').slideDown().addClass('open');
+        first.find('.toggle-icon').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    });
+
+    window.handleMissingData = function() {
+        const data = {
+            columns: $('#missing-cols').val(),
+            method: $('#missing-method').val(),
+            value: $('#custom-missing-value').val(),
+            neighbors: $('#knn-neighbors').val()
+        };
+        console.log('🗑️ handleMissingData() - Sending data:', JSON.stringify(data));
+        $.ajax({
+            url: `/api/clean/${fileId}/missing`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ handleMissingData() - Success:', res);
+                $('#missing-output').text(res.message || 'Applied.');
+                res.preview && updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ handleMissingData() - Error:', err);
+                const msg = err?.responseJSON?.error || err?.responseText || err?.statusText || JSON.stringify(err);
+                $('#missing-output').text(`Error: ${msg}`);
+            }
+
+        });
+    };
+
+    window.handleDuplicates = function() {
+        const method = $('#duplicate-method').val();
+        const data = {
+            columns: $('#duplicate-cols').val(),
+            method,
+            threshold: method === 'near' ? parseFloat($('#fuzzy-threshold').val()) : undefined
+        };
+        console.log('👯 handleDuplicates() - Sending data:', JSON.stringify(data));
+        $.ajax({
+            url: `/api/clean/${fileId}/duplicates`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ handleDuplicates() - Success:', res);
+                $('#duplicate-output').text(res.message || 'Done.');
+                res.preview && updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ handleDuplicates() - Error:', err);
+                $('#duplicate-output').text(err.responseJSON?.error || 'Error.');
+            }
+        });
+    };
+
+    window.convertDataType = function() {
+        const column = $('#conversion-col').val();
+        const newType = $('#new-type').val();
+
+        if (!column || !newType) {
+            $('#conversion-output').text('Please select both a column and a new data type.');
+            return;
+        }
+
+        const data = { column, dtype: newType };
+        console.log('🔀 convertDataType() - Sending data:', JSON.stringify(data));
+
+        $.ajax({
+            url: `/api/clean/${fileId}/dtype`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ convertDataType() - Success:', res);
+                $('#conversion-output').text(res?.message || 'Data type converted.');
+                if (res?.preview) updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ convertDataType() - Error:', err);
+                const msg = err?.responseJSON?.error || `Error (${err.status}): ${err.statusText}`;
+                $('#conversion-output').text(msg);
+            }
+        });
+    };
+
+    window.applyTextPreprocessing = function() {
+        const columns = $('#text-cols').val();
+        if (!columns || columns.length === 0) {
+            $('#text-output').text('Please select at least one text column.');
+            return;
+        }
+
+        const data = {
+            columns,
+            lowercase: $('#lowercase').is(':checked'),
+            remove_punctuation: $('#remove-punctuation').is(':checked'),
+            remove_stopwords: $('#remove-stopwords').is(':checked'),
+            stemming: $('#stemming').is(':checked'),
+            lemmatization: $('#lemmatization').is(':checked')
+        };
+        console.log('📝 applyTextPreprocessing() - Sending data:', JSON.stringify(data));
+
+        $.ajax({
+            url: `/api/clean/${fileId}/text`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ applyTextPreprocessing() - Success:', res);
+                $('#text-output').text(res?.message || 'Processed.');
+                if (res?.preview) updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ applyTextPreprocessing() - Error:', err);
+                const msg = err?.responseJSON?.error || `Error (${err.status}): ${err.statusText}`;
+                $('#text-output').text(msg);
+            }
+        });
+    };
+
+    window.handleOutliers = function() {
+        const method = $('#outlier-method').val();
+        const handling = $('#outlier-handling').val();
+        const data = {
+            columns: $('#outlier-cols').val(),
+            method,
+            handling,
+            zscore_threshold: $('#zscore-threshold').val(),
+            iqr_factor: $('#iqr-factor').val(),
+            boxplots_threshold: $('#boxplots-threshold').val(),
+            contamination: $('#isolation_forest_contamination').val(),
+            custom_value: $('#custom-outlier-value').val()
+        };
+        console.log('📈 handleOutliers() - Sending data:', JSON.stringify(data));
+        $.ajax({
+            url: `/api/clean/${fileId}/outliers`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ handleOutliers() - Success:', res);
+                $('#outlier-output').text(res.message || 'Done.');
+                res.preview && updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ handleOutliers() - Error:', err);
+                $('#outlier-output').text(err.responseJSON?.error || 'Error.');
+            }
+        });
+    };
+
+    window.applyFeatureEngineering = function() {
+        const method = $('#feature-engineering-method').val();
+        let params = {};
+        if (method === 'polynomial') {
+            params = { columns: $('#polynomial-cols').val(), degree: parseInt($('#polynomial-degree').val()) };
+        } else if (method === 'interaction') {
+            params = { col1: $('#interaction-col1').val(), col2: $('#interaction-col2').val(), new_column_name: $('#interaction-name').val() };
+        } else if (method === 'binning') {
+            params = { column: $('#binning-col').val(), binning_type: $('#binning-type').val(), bins: $('#binning-bins').val(), custom_bins: $('#custom-bins').val().split(',').map(Number), labels: $('#binning-labels').val().split(',').map(s => s.trim()) };
+        } else if (method === 'domain') {
+            params = { column: $('#domain-col').val(), new_feature_name: $('#domain-feature-name').val(), function: $('#domain-function').val() };
+        }
+
+        const data = { method, params };
+        console.log('🛠️ applyFeatureEngineering() - Sending data:', JSON.stringify(data));
+        $.ajax({
+            url: `/api/clean/${fileId}/feature_engineer`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ applyFeatureEngineering() - Success:', res);
+                $('#feature-engineering-output').text(res.message || 'Done.');
+                res.preview && updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ applyFeatureEngineering() - Error:', err);
+                $('#feature-engineering-output').text(err.responseJSON?.error || 'Error.');
+            }
+        });
+    };
+
+    window.applyScaling = function() {
+        const columns = $('#scaling-cols').val();
+        const method = $('#scaling-method').val();
+        const data = { columns, method };
+        console.log('⚖️ applyScaling() - Sending data:', JSON.stringify(data));
+        $.ajax({
+            url: `/api/clean/${fileId}/scale`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ applyScaling() - Success:', res);
+                $('#scaling-output').text(res.message || 'Scaled.');
+                res.preview && updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ applyScaling() - Error:', err);
+                $('#scaling-output').text(err.responseJSON?.error || 'Error.');
+            }
+        });
+    };
+
+    window.applyFeatureSelection = function() {
+        const method = $('#selection-method').val();
+        let params = {};
+        if (method === 'correlation') {
+            params.threshold = parseFloat($('#correlation-threshold').val());
+        } else if (method === 'rfe') {
+            params = { target_column: $('#rfe-target').val(), n_features_to_select: parseInt($('#rfe-features').val()), model: $('#rfe-model').val() };
+        } else if (method === 'importance') {
+            params = { target_column: $('#importance-target').val(), model: $('#importance-model').val() };
+        } else if (method === 'pca') {
+            params.n_components = parseInt($('#pca-components').val());
+        }
+
+        const data = { method, params };
+        console.log('⚙️ applyFeatureSelection() - Sending data:', JSON.stringify(data));
+        $.ajax({
+            url: `/api/clean/${fileId}/feature_select`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: res => {
+                console.log('✅ applyFeatureSelection() - Success:', res);
+                $('#selection-output').text(res.message || 'Selected.');
+                res.preview && updateSampleTable(res.preview);
+            },
+            error: err => {
+                console.error('❌ applyFeatureSelection() - Error:', err);
+                $('#selection-output').text(err.responseJSON?.error || 'Error.');
+            }
+        });
+    };
+
+    window.applyChanges = function() {
+        console.log('💾 applyChanges() - Applying all changes...');
+        $.ajax({
+            url: `/api/clean/${fileId}/apply`,
+            method: 'POST',
+            dataType: 'json',
+            success: res => {
+                console.log('✅ applyChanges() - Success:', res);
+                $('#process-output').removeClass('error-message').text(res.message || 'Applied.');
+                if (res.redirect_url) window.location.href = res.redirect_url;
+            },
+            error: err => {
+                console.error('❌ applyChanges() - Error:', err);
+                $('#process-output').addClass('error-message').text(err.responseJSON?.error || 'Error applying changes.');
+            }
+        });
+    };
+
+    window.resetChanges = function() {
+        console.log('🔄 resetChanges() - Resetting changes...');
+        $.ajax({
+            url: `/api/clean/${fileId}/reset`,
+            method: 'POST',
+            dataType: 'json',
+            success: res => {
+                console.log('✅ resetChanges() - Success:', res);
+                $('#process-output').removeClass('error-message').text(res.message || 'Reset.');
+                if (res.preview) updateSampleTable(res.preview);
+                loadColumnNames();
+            },
+            error: err => {
+                console.error('❌ resetChanges() - Error:', err);
+                $('#process-output').addClass('error-message').text(err.responseJSON?.error || 'Error during reset.');
+            }
+        });
+    };
+
+    function updateSampleTable(data) {
+        const tableDiv = document.getElementById('sampleDataTable');
+        if (!data || data.length === 0) {
+            tableDiv.innerHTML = "<p>No data available.</p>";
+            return;
+        }
+
+        const columns = Object.keys(data[0]);
+        let html = "<table><thead><tr>";
+        for (const col of columns) {
+            html += `<th>${col}</th>`;
+        }
+        html += "</tr></thead><tbody>";
+
+        for (const row of data) {
+            html += "<tr>";
+            for (const col of columns) {
+                html += `<td>${row[col]}</td>`;
+            }
+            html += "</tr>";
+        }
+        html += "</tbody></table>";
+
+        tableDiv.innerHTML = html;
+    }
+
+ window.saveNotebook = function() {
+        window.location.href = `/api/notebook/${fileId}/download`;
+    };
+
+
+$('#plot-type').on('change', function () {
+    const type = $(this).val();
+    const $options = window.allColumnsForVisualization || [];
+    const $plotOptions = $('#plot-options');
+    $plotOptions.empty();
+
+    function makeSelect(id, label, options) {
+        const select = $(`<select id="${id}" class="form-control"></select>`);
+        options.forEach(opt => {
+            select.append(`<option value="${opt.value}">${opt.text}</option>`);
+        });
+        return `<label for="${id}">${label}</label>` + select.prop('outerHTML');
+    }
+
+    if (type === 'hist') {
+        $plotOptions.append(makeSelect('hist-col', 'Select Column', $options));
+    } else if (type === 'scatter') {
+        $plotOptions.append(makeSelect('scatter-x-col', 'X Axis', $options));
+        $plotOptions.append(makeSelect('scatter-y-col', 'Y Axis', $options));
+    } else if (type === 'bar') {
+        $plotOptions.append(makeSelect('bar-x-col', 'Category Column', $options));
+        $plotOptions.append(makeSelect('bar-y-col', 'Value Column (Optional)', $options));
+    } else if (type === 'line') {
+        $plotOptions.append(makeSelect('line-x-col', 'X Axis', $options));
+        $plotOptions.append(makeSelect('line-y-col', 'Y Axis', $options));
+    } else if (type === 'box') {
+        $plotOptions.append(makeSelect('box-y-col', 'Value Column', $options));
+        $plotOptions.append(makeSelect('box-x-col', 'Group By Column (Optional)', $options));
+    }
+});
+
+window.applyOneHotEncoding = function() {
+    const columns = $('#onehot-cols').val();
+    const prefix = $('#onehot-prefix').val();
+    const drop = $('#onehot-drop').val();
+    const handle_missing = $('#onehot-handle-missing').val();
+    const dtype = $('#onehot-dtype').val();
+
+    if (!columns || columns.length === 0) {
+        $('#onehot-output').text('Please select at least one column to encode.');
+        return;
+    }
+
+    const data = {
+        columns: columns,
+        prefix: prefix,
+        drop: drop,
+        handle_missing: handle_missing,
+        dtype: dtype
+    };
+
+    console.log('🔥 applyOneHotEncoding() - Sending data:', JSON.stringify(data));
+
+    $.ajax({
+        url: `/api/clean/${window.fileId}/onehot`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: res => {
+            console.log('✅ applyOneHotEncoding() - Success:', res);
+            $('#onehot-output').text(res.message || 'One-Hot Encoding applied.');
+            if (res.preview) {
+                updateSampleTable(res.preview);
+            }
+            loadColumnNames(); // Refresh dropdowns after one-hot encoding
+        },
+        error: err => {
+            console.error('❌ applyOneHotEncoding() - Error:', err);
+            const msg = err?.responseJSON?.error || 'Error applying One-Hot Encoding.';
+            $('#onehot-output').text(msg);
+        }
+    });
+};
+})(jQuery);
+</script>
+</body>
+</html>
